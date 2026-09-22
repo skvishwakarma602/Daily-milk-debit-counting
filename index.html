@@ -17,7 +17,6 @@
             .no-print {
                 display: none !important;
             }
-            /* Hide rows with zero quantity in print view */
             .print-zero-hide {
                 display: none !important;
             }
@@ -32,11 +31,11 @@
             <h1 class="text-xl font-bold flex items-center gap-2">
                 <i class="fa-solid fa-warehouse"></i> Milk Inventory & Audit System
             </h1>
-            <div class="flex gap-2 mt-2 sm:mt-0">
+            <div class="flex items-center gap-2 mt-2 sm:mt-0 flex-wrap">
                 <button onclick="switchTab('entry')" class="px-3 py-1.5 bg-indigo-700 hover:bg-indigo-600 rounded text-sm font-medium transition tab-btn active-tab shadow-inner" id="btn-entry">Daily Entry</button>
-                <button onclick="switchTab('products')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded text-sm font-medium transition tab-btn" id="btn-products"><i class="fa-solid fa-lock text-xs mr-1"></i> Product Master & MRP</button>
+                <button onclick="switchTab('products')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded text-sm font-medium transition tab-btn" id="btn-products"><i class="fa-solid fa-lock text-xs mr-1"></i> Product Master</button>
                 <button onclick="switchTab('reports')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded text-sm font-medium transition tab-btn" id="btn-reports">Reports & Calendar</button>
-                <button onclick="switchTab('audit')" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 rounded text-sm font-medium transition tab-btn" id="btn-audit"><i class="fa-solid fa-shield-halved"></i> Auditor Mode</button>
+                <button onclick="switchTab('audit')" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 rounded text-sm font-medium transition tab-btn" id="btn-audit"><i class="fa-solid fa-shield-halved"></i> Auditor</button>
             </div>
         </div>
     </header>
@@ -57,9 +56,7 @@
             </div>
 
             <!-- Status Notification Banner for Daily Entry -->
-            <div id="entry-status-banner" class="hidden p-4 rounded-xl text-sm font-medium border flex items-center justify-between cursor-pointer transition">
-                <!-- Dynamic status message -->
-            </div>
+            <div id="entry-status-banner" class="hidden p-4 rounded-xl text-sm font-medium border flex items-center justify-between cursor-pointer transition"></div>
 
             <!-- Search Filter Bar for Daily Entry -->
             <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex items-center gap-3">
@@ -79,9 +76,7 @@
                                 <th class="py-2.5 px-3">Total Value (₹)</th>
                             </tr>
                         </thead>
-                        <tbody id="daily-entry-tbody" class="divide-y divide-slate-100 text-sm">
-                            <!-- Dynamic rows -->
-                        </tbody>
+                        <tbody id="daily-entry-tbody" class="divide-y divide-slate-100 text-sm"></tbody>
                     </table>
                 </div>
                 <div id="daily-entry-footer" class="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
@@ -124,9 +119,7 @@
                                 <th class="py-2.5 px-3 text-center">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="product-master-tbody" class="divide-y divide-slate-100 text-sm">
-                            <!-- Dynamic rows -->
-                        </tbody>
+                        <tbody id="product-master-tbody" class="divide-y divide-slate-100 text-sm"></tbody>
                     </table>
                 </div>
             </div>
@@ -148,7 +141,7 @@
                 </div>
                 <div class="flex justify-end gap-2 flex-wrap">
                     <button onclick="exportExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1.5"><i class="fa-solid fa-file-excel"></i> Excel</button>
-                    <button onclick="exportPDF()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1.5"><i class="fa-solid fa-file-pdf"></i> PDF (Print/Save)</button>
+                    <button onclick="exportPDF()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1.5"><i class="fa-solid fa-file-pdf"></i> PDF</button>
                     <button onclick="shareWhatsApp()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1.5"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
                 </div>
             </div>
@@ -226,7 +219,6 @@
                 </div>
             </div>
 
-            <!-- Auditor Live Preview Table for Selected Date -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
                     <span class="font-semibold text-slate-700 text-sm">Stock Entries Preview for Audit Date: <span id="audit-preview-date-label" class="text-indigo-600 font-bold"></span></span>
@@ -243,9 +235,7 @@
                                 <th class="py-2.5 px-3">Total Value (₹)</th>
                             </tr>
                         </thead>
-                        <tbody id="audit-preview-tbody" class="divide-y divide-slate-100 text-sm">
-                            <!-- Populated dynamically -->
-                        </tbody>
+                        <tbody id="audit-preview-tbody" class="divide-y divide-slate-100 text-sm"></tbody>
                     </table>
                 </div>
             </div>
@@ -253,14 +243,14 @@
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
                 <h3 class="font-semibold text-slate-700">Audit Summary Log & Verification History (Click card to view item breakdown)</h3>
                 <div id="audit-log-content" class="text-sm text-slate-600 space-y-3">
-                    <p>No audit clearance executed yet. When an auditor verifies and clears a date, records will appear here.</p>
+                    <p>No audit clearance executed yet.</p>
                 </div>
             </div>
         </section>
 
     </main>
 
-    <!-- Modal for Add/Edit Product -->
+    <!-- Modals -->
     <div id="product-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl max-w-lg w-full p-6 space-y-4 shadow-xl">
             <div class="flex justify-between items-center border-b pb-3">
@@ -289,7 +279,6 @@
         </div>
     </div>
 
-    <!-- Modal for Editing Day Entry Quantity (Numeric Keyboard) -->
     <div id="edit-qty-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl max-w-sm w-full p-6 space-y-4 shadow-xl">
             <div class="flex justify-between items-center border-b pb-3">
@@ -313,13 +302,11 @@
 
     <!-- JavaScript Application Logic -->
     <script>
-        // Proper Case Helper (=PROPER function in Excel)
         function toProperCase(str) {
             if (!str) return '';
             return str.toLowerCase().replace(/(^|\s|-|\()([a-z])/g, (match, p1, p2) => p1 + p2.toUpperCase());
         }
 
-        // Exact custom sequence requested by user without alphabetical sorting
         const defaultProducts = [
             { barcode: "8901262260138", name: "AMUL SHAKTI STANDARDISD MILK(500ML)", mrp: 33.00 },
             { barcode: "8901262260114", name: "AMUL GOLD MILKY MILK POUCH(1L)", mrp: 72.00 },
@@ -333,16 +320,23 @@
             { barcode: "8906023721125", name: "SUMUL SPICED BUTTER MILK POU(200ML)", mrp: 10.00 }
         ];
 
-        // Format product names in Proper Case
         defaultProducts.forEach(p => p.name = toProperCase(p.name));
 
-        let products = JSON.parse(localStorage.getItem('milk_products')) || defaultProducts;
+        // Version control mechanism to override old cached localStorage
+        const APP_VERSION = 'v3_exact_sequence';
+        let savedVersion = localStorage.getItem('milk_app_version');
+        let products = JSON.parse(localStorage.getItem('milk_products'));
+
+        if (!products || savedVersion !== APP_VERSION) {
+            products = JSON.parse(JSON.stringify(defaultProducts));
+            localStorage.setItem('milk_app_version', APP_VERSION);
+        }
         products.forEach(p => p.name = toProperCase(p.name));
-        
+
         let entries = JSON.parse(localStorage.getItem('milk_entries')) || [];
         let auditLogs = JSON.parse(localStorage.getItem('milk_audit_logs')) || [];
         let productMasterUnlocked = false;
-        let unlockedDateMap = {}; // Tracks temporary unlock state per date
+        let unlockedDateMap = {};
 
         localStorage.setItem('milk_products', JSON.stringify(products));
         localStorage.setItem('milk_entries', JSON.stringify(entries));
@@ -437,13 +431,13 @@
             if (hasExisting && !isUnlocked) {
                 banner.className = "p-4 rounded-xl text-sm font-medium border bg-rose-50 border-rose-200 text-rose-800 flex items-center justify-between cursor-pointer hover:bg-rose-100 shadow-sm transition";
                 banner.onclick = promptUnlockDate;
-                banner.innerHTML = `<span><i class="fa-solid fa-lock mr-2"></i> Stock entry exists for <b>${date}</b>. <u class="font-bold">Click here</u> to unlock with password.</span><span class="text-xs bg-rose-200 text-rose-900 px-2.5 py-1 rounded-full font-bold flex items-center gap-1"><i class="fa-solid fa-lock"></i> Date Locked</span>`;
+                banner.innerHTML = `<span><i class="fa-solid fa-lock mr-2"></i> Stock entry exists for <b>${date}</b>. <u class="font-bold">Click here</u> to unlock with password.</span><span class="text-xs bg-rose-200 text-rose-900 px-2.5 py-1 rounded-full font-bold flex items-center gap-1"><i class="fa-solid fa-lock"></i> Locked</span>`;
                 banner.classList.remove('hidden');
                 footer.classList.add('hidden');
             } else if (hasExisting && isUnlocked) {
                 banner.className = "p-4 rounded-xl text-sm font-medium border bg-amber-50 border-amber-200 text-amber-800 flex items-center justify-between shadow-sm";
                 banner.onclick = null;
-                banner.innerHTML = `<span><i class="fa-solid fa-unlock mr-2"></i> Date <b>${date}</b> is currently <b>Unlocked</b>. You can update quantities below and save.</span><span class="text-xs bg-amber-200 text-amber-900 px-2.5 py-1 rounded-full font-bold flex items-center gap-1"><i class="fa-solid fa-unlock"></i> Unlocked</span>`;
+                banner.innerHTML = `<span><i class="fa-solid fa-unlock mr-2"></i> Date <b>${date}</b> is currently <b>Unlocked</b>. You can update quantities below.</span><span class="text-xs bg-amber-200 text-amber-900 px-2.5 py-1 rounded-full font-bold flex items-center gap-1"><i class="fa-solid fa-unlock"></i> Unlocked</span>`;
                 banner.classList.remove('hidden');
                 footer.classList.remove('hidden');
                 saveBtn.innerHTML = `<i class="fa-solid fa-save"></i> Update Entry`;
@@ -628,7 +622,7 @@
                 entries = entries.filter(e => e.barcode !== barcodeToDelete);
                 saveData();
                 renderProductMaster();
-                alert('Product and all its corresponding daily stock entries deleted permanently.');
+                alert('Product and corresponding entries deleted.');
             }
         }
 
@@ -699,7 +693,6 @@
             let dayTotalQty = 0;
             let dayTotalVal = 0;
 
-            // Maintain custom product order when displaying day view entries
             products.forEach(p => {
                 const e = dayEntries.find(item => item.barcode === p.barcode);
                 if (e && e.qty > 0) {
