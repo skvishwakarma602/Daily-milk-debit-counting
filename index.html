@@ -44,6 +44,11 @@
                 <button onclick="switchTab('products')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded text-sm font-medium transition tab-btn" id="btn-products"><i class="fa-solid fa-lock text-xs mr-1"></i> Product Master</button>
                 <button onclick="switchTab('reports')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded text-sm font-medium transition tab-btn" id="btn-reports">Reports & Calendar</button>
                 <button onclick="switchTab('audit')" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 rounded text-sm font-medium transition tab-btn" id="btn-audit"><i class="fa-solid fa-shield-halved"></i> Auditor</button>
+                
+                <!-- Dedicated PWA Install Button -->
+                <button id="pwa-install-btn" onclick="installPWA()" class="hidden px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded text-sm font-medium transition flex items-center gap-1.5 shadow">
+                    <i class="fa-solid fa-download"></i> Install App
+                </button>
             </div>
         </div>
     </header>
@@ -310,14 +315,15 @@
 
     <!-- JavaScript Application Logic -->
     <script>
-        // PWA Setup: Dynamic Manifest with Milk Logo & Service Worker Registration
+        // PWA Setup: Robust Data URI Manifest & Standalone Configuration
         const milkLogoSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='512' height='512'><rect width='512' height='512' rx='120' fill='%234338ca'/><path d='M200 120h112v40H200z' fill='%23ffffff'/><path d='M176 160h160v32H176z' fill='%23ffffff'/><path d='M160 192h192c17.7 0 32 14.3 32 32v224c0 17.7-14.3 32-32 32H160c-17.7 0-32-14.3-32-32V224c0-17.7 14.3-32 32-32z' fill='%23ffffff'/><circle cx='256' cy='320' r='48' fill='%234338ca'/></svg>`;
         
         const manifestData = {
             "name": "Milk Inventory & Audit System",
             "short_name": "MilkAudit",
             "description": "Daily Milk Debit Counting & Inventory Management System",
-            "start_url": window.location.href.split('?')[0],
+            "start_url": ".",
+            "scope": ".",
             "display": "standalone",
             "background_color": "#ffffff",
             "theme_color": "#4338ca",
@@ -330,10 +336,41 @@
                 }
             ]
         };
-        const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/manifest+json'});
-        document.getElementById('pwa-manifest').href = URL.createObjectURL(manifestBlob);
+        const manifestString = JSON.stringify(manifestData);
+        document.getElementById('pwa-manifest').href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(manifestString);
 
-        // Register Service Worker for native PWA installation prompt support
+        // PWA Install Prompt & Event Handlers
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const installBtn = document.getElementById('pwa-install-btn');
+            if (installBtn) installBtn.classList.remove('hidden');
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    }
+                    deferredPrompt = null;
+                    const installBtn = document.getElementById('pwa-install-btn');
+                    if (installBtn) installBtn.classList.add('hidden');
+                });
+            } else {
+                alert('App is ready! You can also install by tapping the Chrome menu (three dots) and selecting "Install app" or "Add to Home screen".');
+            }
+        }
+
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('PWA was installed successfully');
+            const installBtn = document.getElementById('pwa-install-btn');
+            if (installBtn) installBtn.classList.add('hidden');
+        });
+
+        // Register Service Worker for offline/PWA support
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
@@ -369,7 +406,7 @@
 
         defaultProducts.forEach(p => p.name = toProperCase(p.name));
 
-        const APP_VERSION = 'v4_pwa_milk_logo';
+        const APP_VERSION = 'v5_pwa_install_fix';
         let savedVersion = localStorage.getItem('milk_app_version');
         let products = JSON.parse(localStorage.getItem('milk_products'));
 
