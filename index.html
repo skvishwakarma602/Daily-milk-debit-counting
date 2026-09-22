@@ -85,9 +85,9 @@
                             <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold">
                                 <th class="py-2.5 px-3 hidden">Barcode</th>
                                 <th class="py-2.5 px-3">Product Name</th>
-                                <th class="py-2.5 px-3">MRP (?)</th>
+                                <th class="py-2.5 px-3">MRP ()</th>
                                 <th class="py-2.5 px-3 w-20">Today Qty</th>
-                                <th class="py-2.5 px-3">Total Value (?)</th>
+                                <th class="py-2.5 px-3">Total Value ()</th>
                             </tr>
                         </thead>
                         <tbody id="daily-entry-tbody" class="divide-y divide-slate-100 text-sm"></tbody>
@@ -96,7 +96,7 @@
                 <div id="daily-entry-footer" class="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
                     <div class="text-sm font-medium text-slate-600">
                         Total Items Today: <span id="today-total-qty" class="font-bold text-indigo-600">0</span> | 
-                        Total Value: ?<span id="today-total-val" class="font-bold text-indigo-600">0.00</span>
+                        Total Value: <span id="today-total-val" class="font-bold text-indigo-600">0.00</span>
                     </div>
                     <button onclick="saveDailyEntries()" id="save-entry-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-medium shadow transition flex items-center gap-2">
                         <i class="fa-solid fa-save"></i> Save Today's Entry
@@ -129,7 +129,7 @@
                             <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold">
                                 <th class="py-2.5 px-3">Barcode</th>
                                 <th class="py-2.5 px-3">Product Name</th>
-                                <th class="py-2.5 px-3">Current MRP (?)</th>
+                                <th class="py-2.5 px-3">Current MRP ()</th>
                                 <th class="py-2.5 px-3 text-center">Actions</th>
                             </tr>
                         </thead>
@@ -173,8 +173,8 @@
                                 <th class="py-2.5 px-3">Barcode</th>
                                 <th class="py-2.5 px-3">Product Name</th>
                                 <th class="py-2.5 px-3">Total Qty Received</th>
-                                <th class="py-2.5 px-3">MRP (?)</th>
-                                <th class="py-2.5 px-3">Total Value (?)</th>
+                                <th class="py-2.5 px-3">MRP ()</th>
+                                <th class="py-2.5 px-3">Total Value ()</th>
                             </tr>
                         </thead>
                         <tbody id="cumulative-tbody" class="divide-y divide-slate-100 text-sm"></tbody>
@@ -202,8 +202,8 @@
                                     <th class="py-2.5 px-3">Product Name</th>
                                     <th class="py-2.5 px-3">Barcode</th>
                                     <th class="py-2.5 px-3">Date Quantity</th>
-                                    <th class="py-2.5 px-3">MRP (?)</th>
-                                    <th class="py-2.5 px-3">Value (?)</th>
+                                    <th class="py-2.5 px-3">MRP ()</th>
+                                    <th class="py-2.5 px-3">Value ()</th>
                                     <th class="py-2.5 px-3 text-center no-print">Actions</th>
                                 </tr>
                             </thead>
@@ -236,7 +236,7 @@
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
                     <span class="font-semibold text-slate-700 text-sm">Stock Entries Preview for Audit Date: <span id="audit-preview-date-label" class="text-indigo-600 font-bold"></span></span>
-                    <span class="text-sm font-medium text-slate-600">Total Qty: <span id="audit-preview-total-qty" class="font-bold text-indigo-600">0</span> | Value: ?<span id="audit-preview-total-val" class="font-bold text-indigo-600">0.00</span></span>
+                    <span class="text-sm font-medium text-slate-600">Total Qty: <span id="audit-preview-total-qty" class="font-bold text-indigo-600">0</span> | Value: <span id="audit-preview-total-val" class="font-bold text-indigo-600">0.00</span></span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -245,8 +245,8 @@
                                 <th class="py-2.5 px-3">Product Name</th>
                                 <th class="py-2.5 px-3">Barcode</th>
                                 <th class="py-2.5 px-3">Quantity</th>
-                                <th class="py-2.5 px-3">MRP (?)</th>
-                                <th class="py-2.5 px-3">Total Value (?)</th>
+                                <th class="py-2.5 px-3">MRP ()</th>
+                                <th class="py-2.5 px-3">Total Value ()</th>
                             </tr>
                         </thead>
                         <tbody id="audit-preview-tbody" class="divide-y divide-slate-100 text-sm"></tbody>
@@ -282,7 +282,7 @@
                     <input type="text" id="modal-name" class="w-full border border-slate-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">MRP (?)</label>
+                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">MRP ()</label>
                     <input type="number" step="0.01" id="modal-mrp" class="w-full border border-slate-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
             </div>
@@ -316,8 +316,8 @@
 
     <!-- JavaScript Application Logic -->
     <script>
-        // High-Quality PWA Icon using the requested ? emoji inside an Indigo rounded square
-        const milkSvgString = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='512' height='512'><rect width='512' height='512' rx='120' fill='%234338ca'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-size='240'>?</text></svg>`;
+        // High-Quality PWA Icon using the requested  emoji inside an Indigo rounded square
+        const milkSvgString = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='512' height='512'><rect width='512' height='512' rx='120' fill='%234338ca'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-size='240'></text></svg>`;
         const milkLogoDataUri = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(milkSvgString)));
 
         // Dynamic Manifest Generation to prevent blank screen in PWA standalone mode
@@ -326,8 +326,8 @@
             "name": "Milk Inventory & Audit System",
             "short_name": "MilkAudit",
             "description": "Daily Milk Debit Counting & Inventory Management System",
-            "start_url": currentUrl,
-            "scope": currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1),
+            "start_url": "./",
+            "scope": "./",
             "display": "standalone",
             "background_color": "#ffffff",
             "theme_color": "#4338ca",
@@ -361,7 +361,7 @@
                     deferredPrompt = null;
                 });
             } else {
-                alert('? To install this app as a standalone app (without URL bar):\n\n1. Open your browser menu (tap the three dots ? at the top right).\n2. Select "Install app" or "Add to Home screen".\n3. Tap Add / Install, and the app will open in full-screen standalone mode without any URL bar!');
+                alert(' To install this app as a standalone app (without URL bar):\n\n1. Open your browser menu (tap the three dots  at the top right).\n2. Select "Install app" or "Add to Home screen".\n3. Tap Add / Install, and the app will open in full-screen standalone mode without any URL bar!');
             }
         }
 
@@ -369,15 +369,53 @@
             console.log('PWA was installed successfully');
         });
 
-        // Register Service Worker with Network-First strategy to eliminate blank screen issues
+        // FIXED Service Worker with Cache-First & Offline Fallback to completely eliminate blank screen issues
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
-                    self.addEventListener('install', (e) => self.skipWaiting());
-                    self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
+                    const CACHE_NAME = 'milk-audit-cache-v10';
+                    self.addEventListener('install', (e) => {
+                        self.skipWaiting();
+                    });
+                    self.addEventListener('activate', (e) => {
+                        e.waitUntil(
+                            caches.keys().then(keys => {
+                                return Promise.all(
+                                    keys.map(key => {
+                                        if (key !== CACHE_NAME) {
+                                            return caches.delete(key);
+                                        }
+                                    })
+                                );
+                            }).then(() => self.clients.claim())
+                        );
+                    });
                     self.addEventListener('fetch', (e) => {
                         e.respondWith(
-                            fetch(e.request).catch(() => caches.match(e.request))
+                            caches.match(e.request).then((cachedResponse) => {
+                                if (cachedResponse) {
+                                    // Fetch new version in background
+                                    fetch(e.request).then((networkResponse) => {
+                                        if (networkResponse && networkResponse.status === 200) {
+                                            caches.open(CACHE_NAME).then((cache) => {
+                                                cache.put(e.request, networkResponse);
+                                            });
+                                        }
+                                    }).catch(() => {});
+                                    return cachedResponse;
+                                }
+                                return fetch(e.request).then((networkResponse) => {
+                                    if (networkResponse && networkResponse.status === 200) {
+                                        const responseClone = networkResponse.clone();
+                                        caches.open(CACHE_NAME).then((cache) => {
+                                            cache.put(e.request, responseClone);
+                                        });
+                                    }
+                                    return networkResponse;
+                                }).catch(() => {
+                                    return caches.match('./');
+                                });
+                            })
                         );
                     });
                 `;
@@ -407,7 +445,7 @@
 
         defaultProducts.forEach(p => p.name = toProperCase(p.name));
 
-        const APP_VERSION = 'v9_pwa_emoji_logo_fix';
+        const APP_VERSION = 'v10_pwa_blank_fix';
         let savedVersion = localStorage.getItem('milk_app_version');
         let products = JSON.parse(localStorage.getItem('milk_products'));
 
@@ -554,13 +592,13 @@
                 tr.innerHTML = `
                     <td class="py-2 px-3 font-mono text-xs text-slate-600 hidden">${p.barcode}</td>
                     <td class="py-2 px-3 font-medium text-slate-800">${p.name}</td>
-                    <td class="py-2 px-3 font-semibold text-slate-700">?${p.mrp.toFixed(2)}</td>
+                    <td class="py-2 px-3 font-semibold text-slate-700">${p.mrp.toFixed(2)}</td>
                     <td class="py-2 px-3">
                         <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" value="${qty}" data-barcode="${p.barcode}" 
                         class="daily-qty-input w-16 border border-slate-300 rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-semibold ${isDisabled ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''}"
                         ${isDisabled ? 'disabled' : 'oninput="calculateDailyTotals()"'} placeholder="">
                     </td>
-                    <td class="py-2 px-3 font-semibold text-indigo-600 row-val" id="val-${p.barcode}">?${val.toFixed(2)}</td>
+                    <td class="py-2 px-3 font-semibold text-indigo-600 row-val" id="val-${p.barcode}">${val.toFixed(2)}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -578,7 +616,7 @@
                 const product = products.find(p => p.barcode === barcode);
                 const qty = Number(input.value) || 0;
                 const val = qty * product.mrp;
-                document.getElementById('val-' + barcode).innerText = `?${val.toFixed(2)}`;
+                document.getElementById('val-' + barcode).innerText = `${val.toFixed(2)}`;
                 totalQty += qty;
                 totalVal += val;
             });
@@ -641,7 +679,7 @@
                 tr.innerHTML = `
                     <td class="py-2 px-3 font-mono text-xs text-slate-600">${p.barcode}</td>
                     <td class="py-2 px-3 font-medium text-slate-800">${p.name}</td>
-                    <td class="py-2 px-3 font-semibold text-slate-700">?${p.mrp.toFixed(2)}</td>
+                    <td class="py-2 px-3 font-semibold text-slate-700">${p.mrp.toFixed(2)}</td>
                     <td class="py-2 px-3 text-center">
                         <div class="flex items-center justify-center gap-3">
                             <button onclick="editProduct(${index})" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5"><i class="fa-solid fa-pen-to-square"></i> Edit MRP</button>
@@ -744,8 +782,8 @@
                     <td class="py-2 px-3 font-mono text-xs text-slate-600">${p.barcode}</td>
                     <td class="py-2 px-3 font-medium text-slate-800">${p.name}</td>
                     <td class="py-2 px-3 font-bold text-indigo-600">${totalQty}</td>
-                    <td class="py-2 px-3 font-semibold text-slate-700">?${p.mrp.toFixed(2)}</td>
-                    <td class="py-2 px-3 font-semibold text-indigo-600">?${totalVal.toFixed(2)}</td>
+                    <td class="py-2 px-3 font-semibold text-slate-700">${p.mrp.toFixed(2)}</td>
+                    <td class="py-2 px-3 font-semibold text-indigo-600">${totalVal.toFixed(2)}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -756,7 +794,7 @@
                 <td colspan="2" class="py-2.5 px-3 text-slate-800 uppercase text-xs">Grand Total (All Products)</td>
                 <td class="py-2.5 px-3 text-indigo-700">${grandTotalQty}</td>
                 <td class="py-2.5 px-3 text-slate-500">-</td>
-                <td class="py-2.5 px-3 text-indigo-700">?${grandTotalVal.toFixed(2)}</td>
+                <td class="py-2.5 px-3 text-indigo-700">${grandTotalVal.toFixed(2)}</td>
             `;
             tbody.appendChild(grandTotalTr);
         }
@@ -790,8 +828,8 @@
                         <td class="py-2 px-3 font-medium text-slate-800">${p.name}</td>
                         <td class="py-2 px-3 font-mono text-xs text-slate-600">${p.barcode}</td>
                         <td class="py-2 px-3 font-bold text-indigo-600">${e.qty}</td>
-                        <td class="py-2 px-3 text-slate-700">?${p.mrp.toFixed(2)}</td>
-                        <td class="py-2 px-3 font-semibold text-indigo-600">?${val.toFixed(2)}</td>
+                        <td class="py-2 px-3 text-slate-700">${p.mrp.toFixed(2)}</td>
+                        <td class="py-2 px-3 font-semibold text-indigo-600">${val.toFixed(2)}</td>
                         <td class="py-2 px-3 text-center no-print">
                             <div class="flex items-center justify-center gap-3">
                                 <button onclick="editDayEntry('${date}', '${p.barcode}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5"><i class="fa-solid fa-pen"></i> Edit</button>
@@ -809,7 +847,7 @@
                 <td colspan="2" class="py-2.5 px-3 text-slate-800 uppercase text-xs">Total for ${date}</td>
                 <td class="py-2.5 px-3 text-indigo-700">${dayTotalQty}</td>
                 <td class="py-2.5 px-3 text-slate-500">-</td>
-                <td class="py-2.5 px-3 text-indigo-700">?${dayTotalVal.toFixed(2)}</td>
+                <td class="py-2.5 px-3 text-indigo-700">${dayTotalVal.toFixed(2)}</td>
                 <td class="no-print"></td>
             `;
             tbody.appendChild(dayTotalTr);
@@ -893,8 +931,8 @@
                         <td class="py-2 px-3 font-medium text-slate-800">${p.name}</td>
                         <td class="py-2 px-3 font-mono text-xs text-slate-600">${p.barcode}</td>
                         <td class="py-2 px-3 font-bold text-indigo-600">${e.qty}</td>
-                        <td class="py-2 px-3 text-slate-700">?${p.mrp.toFixed(2)}</td>
-                        <td class="py-2 px-3 font-semibold text-indigo-600">?${val.toFixed(2)}</td>
+                        <td class="py-2 px-3 text-slate-700">${p.mrp.toFixed(2)}</td>
+                        <td class="py-2 px-3 font-semibold text-indigo-600">${val.toFixed(2)}</td>
                     `;
                     tbody.appendChild(tr);
                 }
@@ -966,7 +1004,7 @@
                     <div onclick="toggleAuditLogDetail(${log.id})" class="p-4 cursor-pointer flex justify-between items-center bg-white">
                         <div>
                             <p class="font-semibold text-slate-800">Audited Date: ${log.auditedDate} <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded ml-2">${log.status}</span></p>
-                            <p class="text-xs text-slate-500 mt-0.5">Cleared on: ${log.timestamp} | Total Qty: <span class="font-bold text-indigo-600">${log.totalItems}</span> | Value: <span class="font-bold text-indigo-600">?${log.totalValue.toFixed(2)}</span></p>
+                            <p class="text-xs text-slate-500 mt-0.5">Cleared on: ${log.timestamp} | Total Qty: <span class="font-bold text-indigo-600">${log.totalItems}</span> | Value: <span class="font-bold text-indigo-600">${log.totalValue.toFixed(2)}</span></p>
                         </div>
                         <div class="text-slate-400 text-sm flex items-center gap-1">
                             <span>View items</span>
@@ -991,8 +1029,8 @@
                                             <td class="py-2 font-medium text-slate-700">${i.name}</td>
                                             <td class="py-2 font-mono text-slate-500">${i.barcode}</td>
                                             <td class="py-2 font-bold text-indigo-600">${i.qty}</td>
-                                            <td class="py-2 text-slate-600">?${i.mrp.toFixed(2)}</td>
-                                            <td class="py-2 font-semibold text-slate-700">?${i.totalVal.toFixed(2)}</td>
+                                            <td class="py-2 text-slate-600">${i.mrp.toFixed(2)}</td>
+                                            <td class="py-2 font-semibold text-slate-700">${i.totalVal.toFixed(2)}</td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -1038,10 +1076,10 @@
             const filterType = document.getElementById('report-filter-type').value;
             const selectedDate = document.getElementById('calendar-select-date').value || todayStr;
 
-            let text = `? *MILK DEBIT QUANTITY* ?\n? *Date:* ${now}\n`;
+            let text = ` *MILK DEBIT QUANTITY* \n *Date:* ${now}\n`;
 
             if (filterType === 'calendar') {
-                text += `\n? *DATE-WISE REPORT (${selectedDate})*\n¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w\n`;
+                text += `\n *DATE-WISE REPORT (${selectedDate})*\n\n`;
                 let dayQtySum = 0;
                 let dayValSum = 0;
 
@@ -1055,13 +1093,13 @@
                             const val = e.qty * p.mrp;
                             dayQtySum += e.qty;
                             dayValSum += val;
-                            text += `?? ${p.name} \nQty: *${e.qty}*\n`;
+                            text += ` ${p.name} \nQty: *${e.qty}*\n`;
                         }
                     });
                 }
-                text += `¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w\n? *Total Quantity:* ${dayQtySum}\n? *Total Value:* ?${dayValSum.toFixed(2)}\n`;
+                text += `\n *Total Quantity:* ${dayQtySum}\n *Total Value:* ${dayValSum.toFixed(2)}\n`;
             } else {
-                text += `\n? *ALL COMBINE DEBIT QTY*\n¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w\n`;
+                text += `\n *ALL COMBINE DEBIT QTY*\n\n`;
                 let grandTotalQty = 0;
                 let grandTotalVal = 0;
 
@@ -1071,14 +1109,14 @@
                         const val = totalQty * p.mrp;
                         grandTotalQty += totalQty;
                         grandTotalVal += val;
-                        text += `?? ${p.name} \nQty: *${totalQty}*\n`;
+                        text += ` ${p.name} \nQty: *${totalQty}*\n`;
                     }
                 });
 
-                text += `¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w\n? *Debit Quantity:* ${grandTotalQty}\n? *Debit Value:* ?${grandTotalVal.toFixed(2)}\n`;
+                text += `\n *Debit Quantity:* ${grandTotalQty}\n *Debit Value:* ${grandTotalVal.toFixed(2)}\n`;
             }
 
-            text += `\n? *Status:* Counting Done`;
+            text += `\n *Status:* Counting Done`;
 
             const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
             window.open(whatsappUrl, '_blank');
