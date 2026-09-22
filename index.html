@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Milk Debit Daily Counting</title>
+    
+    <!-- PWA Manifest & Dynamic Icon Setup -->
+    <link rel="manifest" id="pwa-manifest">
+    <meta name="theme-color" content="#4338ca">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Milk Audit">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -302,6 +310,45 @@
 
     <!-- JavaScript Application Logic -->
     <script>
+        // PWA Setup: Dynamic Manifest with Milk Logo & Service Worker Registration
+        const milkLogoSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='512' height='512'><rect width='512' height='512' rx='120' fill='%234338ca'/><path d='M200 120h112v40H200z' fill='%23ffffff'/><path d='M176 160h160v32H176z' fill='%23ffffff'/><path d='M160 192h192c17.7 0 32 14.3 32 32v224c0 17.7-14.3 32-32 32H160c-17.7 0-32-14.3-32-32V224c0-17.7 14.3-32 32-32z' fill='%23ffffff'/><circle cx='256' cy='320' r='48' fill='%234338ca'/></svg>`;
+        
+        const manifestData = {
+            "name": "Milk Inventory & Audit System",
+            "short_name": "MilkAudit",
+            "description": "Daily Milk Debit Counting & Inventory Management System",
+            "start_url": window.location.href.split('?')[0],
+            "display": "standalone",
+            "background_color": "#ffffff",
+            "theme_color": "#4338ca",
+            "icons": [
+                {
+                    "src": `data:image/svg+xml;utf8,${encodeURIComponent(milkLogoSvg)}`,
+                    "sizes": "192x192 512x512",
+                    "type": "image/svg+xml",
+                    "purpose": "any maskable"
+                }
+            ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/manifest+json'});
+        document.getElementById('pwa-manifest').href = URL.createObjectURL(manifestBlob);
+
+        // Register Service Worker for native PWA installation prompt support
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `
+                    self.addEventListener('install', (e) => self.skipWaiting());
+                    self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
+                    self.addEventListener('fetch', (e) => {
+                        e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)).catch(() => fetch(e.request)));
+                    });
+                `;
+                const swBlob = new Blob([swCode], { type: 'text/javascript' });
+                navigator.serviceWorker.register(URL.createObjectURL(swBlob))
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+
         function toProperCase(str) {
             if (!str) return '';
             return str.toLowerCase().replace(/(^|\s|-|\()([a-z])/g, (match, p1, p2) => p1 + p2.toUpperCase());
@@ -322,8 +369,7 @@
 
         defaultProducts.forEach(p => p.name = toProperCase(p.name));
 
-        // Version control mechanism to override old cached localStorage
-        const APP_VERSION = 'v3_exact_sequence';
+        const APP_VERSION = 'v4_pwa_milk_logo';
         let savedVersion = localStorage.getItem('milk_app_version');
         let products = JSON.parse(localStorage.getItem('milk_products'));
 
