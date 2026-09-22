@@ -316,16 +316,18 @@
 
     <!-- JavaScript Application Logic -->
     <script>
-        // High-Quality Base64 Encoded Milk Bottle PWA Icon & Manifest Setup (Prevents Black Screen / Missing Icon Issue)
-        const milkSvgString = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='512' height='512'><rect width='512' height='512' rx='120' fill='%234338ca'/><path d='M210 110h92v40h-92z' fill='%23ffffff'/><path d='M180 150h152c16.5 0 30 13.5 30 30v22c0 11-9 20-20 20H170c-11 0-20-9-20-20v-22c0-16.5 13.5-30 30-30z' fill='%23ffffff'/><path d='M170 242h172c16.5 0 30 13.5 30 30v140c0 16.5-13.5 30-30 30H170c-16.5 0-30-13.5-30-30V272c0-16.5 13.5-30 30-30z' fill='%23ffffff'/><path d='M256 290c-35 45-52 72-52 94 0 28.7 23.3 52 52 52s52-23.3 52-52c0-22-17-49-52-94z' fill='%234338ca'/></svg>`;
-        const milkLogoDataUri = 'data:image/svg+xml;base64,' + btoa(milkSvgString);
+        // High-Quality PWA Icon using the requested ? emoji inside an Indigo rounded square
+        const milkSvgString = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='512' height='512'><rect width='512' height='512' rx='120' fill='%234338ca'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-size='240'>?</text></svg>`;
+        const milkLogoDataUri = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(milkSvgString)));
 
+        // Dynamic Manifest Generation to prevent blank screen in PWA standalone mode
+        const currentUrl = window.location.href.split('?')[0].split('#')[0];
         const manifestData = {
             "name": "Milk Inventory & Audit System",
             "short_name": "MilkAudit",
             "description": "Daily Milk Debit Counting & Inventory Management System",
-            "start_url": ".",
-            "scope": ".",
+            "start_url": currentUrl,
+            "scope": currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1),
             "display": "standalone",
             "background_color": "#ffffff",
             "theme_color": "#4338ca",
@@ -367,14 +369,16 @@
             console.log('PWA was installed successfully');
         });
 
-        // Register Service Worker for offline/PWA support
+        // Register Service Worker with Network-First strategy to eliminate blank screen issues
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
                     self.addEventListener('install', (e) => self.skipWaiting());
                     self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
                     self.addEventListener('fetch', (e) => {
-                        e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)).catch(() => fetch(e.request)));
+                        e.respondWith(
+                            fetch(e.request).catch(() => caches.match(e.request))
+                        );
                     });
                 `;
                 const swBlob = new Blob([swCode], { type: 'text/javascript' });
@@ -403,7 +407,7 @@
 
         defaultProducts.forEach(p => p.name = toProperCase(p.name));
 
-        const APP_VERSION = 'v8_pwa_icon_base64_fix';
+        const APP_VERSION = 'v9_pwa_emoji_logo_fix';
         let savedVersion = localStorage.getItem('milk_app_version');
         let products = JSON.parse(localStorage.getItem('milk_products'));
 
@@ -1037,7 +1041,7 @@
             let text = `? *MILK DEBIT QUANTITY* ?\n? *Date:* ${now}\n`;
 
             if (filterType === 'calendar') {
-                text += `\n? *DATE-WISE REPORT (${selectedDate})*\n式式式式式式式式式式式式式式式式式式式式式式式式\n`;
+                text += `\n? *DATE-WISE REPORT (${selectedDate})*\n────────────────────────\n`;
                 let dayQtySum = 0;
                 let dayValSum = 0;
 
@@ -1055,9 +1059,9 @@
                         }
                     });
                 }
-                text += `式式式式式式式式式式式式式式式式式式式式式式式式\n? *Total Quantity:* ${dayQtySum}\n? *Total Value:* ?${dayValSum.toFixed(2)}\n`;
+                text += `────────────────────────\n? *Total Quantity:* ${dayQtySum}\n? *Total Value:* ?${dayValSum.toFixed(2)}\n`;
             } else {
-                text += `\n? *ALL COMBINE DEBIT QTY*\n式式式式式式式式式式式式式式式式式式式式式式式式\n`;
+                text += `\n? *ALL COMBINE DEBIT QTY*\n────────────────────────\n`;
                 let grandTotalQty = 0;
                 let grandTotalVal = 0;
 
@@ -1071,7 +1075,7 @@
                     }
                 });
 
-                text += `式式式式式式式式式式式式式式式式式式式式式式式式\n? *Debit Quantity:* ${grandTotalQty}\n? *Debit Value:* ?${grandTotalVal.toFixed(2)}\n`;
+                text += `────────────────────────\n? *Debit Quantity:* ${grandTotalQty}\n? *Debit Value:* ?${grandTotalVal.toFixed(2)}\n`;
             }
 
             text += `\n? *Status:* Counting Done`;
