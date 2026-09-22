@@ -319,48 +319,27 @@
             return str.toLowerCase().replace(/(^|\s|-|\()([a-z])/g, (match, p1, p2) => p1 + p2.toUpperCase());
         }
 
+        // Exact custom sequence requested by user without alphabetical sorting
         const defaultProducts = [
-            { barcode: "8901262260107", name: "AMUL GOLD SPECIAL MILK(500ML)", mrp: 36.00 },
             { barcode: "8901262260138", name: "AMUL SHAKTI STANDARDISD MILK(500ML)", mrp: 33.00 },
-            { barcode: "8901262200677", name: "AMUL MASTI DAHI POUCH(1KG)", mrp: 80.00 },
             { barcode: "8901262260114", name: "AMUL GOLD MILKY MILK POUCH(1L)", mrp: 72.00 },
+            { barcode: "8901262260107", name: "AMUL GOLD SPECIAL MILK(500ML)", mrp: 36.00 },
             { barcode: "8901262260121", name: "AMUL TAAZA MILKY MILK POUCH(500ML)", mrp: 29.00 },
+            { barcode: "8906023720494", name: "SUMUL COW MILK POUCH(500ML)", mrp: 30.00 },
             { barcode: "8901262260954", name: "AMUL BUFFALO MILK(1L)", mrp: 78.00 },
             { barcode: "8906023724805", name: "SUMUL SKIMMED MILK CURD(1KG)", mrp: 60.00 },
-            { barcode: "8906023721309", name: "SUMUL BUTTER MILK  POUCH(500ML)", mrp: 17.00 },
-            { barcode: "8906023720494", name: "SUMUL COW MILK POUCH(500ML)", mrp: 30.00 },
-            { barcode: "8901262202220", name: "AMUL MASTI DAHI BUCKET(1KG)", mrp: 115.00 },
             { barcode: "8906023724843", name: "SUMUL PUNJABI DAHI(1KG)", mrp: 80.00 },
+            { barcode: "8906023721309", name: "SUMUL BUTTER MILK POUCH(500ML)", mrp: 17.00 },
             { barcode: "8906023721125", name: "SUMUL SPICED BUTTER MILK POU(200ML)", mrp: 10.00 }
         ];
 
         // Format product names in Proper Case
         defaultProducts.forEach(p => p.name = toProperCase(p.name));
 
-        // Sort default products alphabetically by name
-        defaultProducts.sort((a, b) => a.name.localeCompare(b.name));
-
         let products = JSON.parse(localStorage.getItem('milk_products')) || defaultProducts;
         products.forEach(p => p.name = toProperCase(p.name));
         
-        // PERMANENT REMOVAL CLEANUP FOR UNWANTED PRODUCTS
-        const unwantedProductNames = [
-            "Sumul Punjabi Dahi Tub(400g)", 
-            "Sumul Punjabi Dahi Tub(1kg)"
-        ];
-        
-        const unwantedBarcodes = products
-            .filter(p => unwantedProductNames.includes(p.name))
-            .map(p => p.barcode);
-
-        products = products.filter(p => !unwantedProductNames.includes(p.name));
-        products.sort((a, b) => a.name.localeCompare(b.name));
-
         let entries = JSON.parse(localStorage.getItem('milk_entries')) || [];
-        if (unwantedBarcodes.length > 0) {
-            entries = entries.filter(e => !unwantedBarcodes.includes(e.barcode));
-        }
-
         let auditLogs = JSON.parse(localStorage.getItem('milk_audit_logs')) || [];
         let productMasterUnlocked = false;
         let unlockedDateMap = {}; // Tracks temporary unlock state per date
@@ -379,21 +358,18 @@
 
         function saveData() {
             products.forEach(p => p.name = toProperCase(p.name));
-            products.sort((a, b) => a.name.localeCompare(b.name));
             localStorage.setItem('milk_products', JSON.stringify(products));
             localStorage.setItem('milk_entries', JSON.stringify(entries));
             localStorage.setItem('milk_audit_logs', JSON.stringify(auditLogs));
         }
 
         function forceResetProducts() {
-            if (confirm("Are you sure you want to reset all products to the default active items?")) {
+            if (confirm("Are you sure you want to reset all products to your custom default list?")) {
                 products = JSON.parse(JSON.stringify(defaultProducts));
                 products.forEach(p => p.name = toProperCase(p.name));
-                products = products.filter(p => !unwantedProductNames.includes(p.name));
-                products.sort((a, b) => a.name.localeCompare(b.name));
                 saveData();
                 renderProductMaster();
-                alert("Successfully reset products!");
+                alert("Successfully reset products to custom list!");
             }
         }
 
@@ -723,28 +699,31 @@
             let dayTotalQty = 0;
             let dayTotalVal = 0;
 
-            dayEntries.forEach((e) => {
-                const p = products.find(prod => prod.barcode === e.barcode) || { name: 'Unknown', mrp: 0 };
-                const val = e.qty * p.mrp;
-                dayTotalQty += e.qty;
-                dayTotalVal += val;
+            // Maintain custom product order when displaying day view entries
+            products.forEach(p => {
+                const e = dayEntries.find(item => item.barcode === p.barcode);
+                if (e && e.qty > 0) {
+                    const val = e.qty * p.mrp;
+                    dayTotalQty += e.qty;
+                    dayTotalVal += val;
 
-                const tr = document.createElement('tr');
-                tr.className = e.qty === 0 ? "hover:bg-slate-50 print-zero-hide" : "hover:bg-slate-50";
-                tr.innerHTML = `
-                    <td class="py-2 px-3 font-medium text-slate-800">${p.name}</td>
-                    <td class="py-2 px-3 font-mono text-xs text-slate-600">${e.barcode}</td>
-                    <td class="py-2 px-3 font-bold text-indigo-600">${e.qty}</td>
-                    <td class="py-2 px-3 text-slate-700">₹${p.mrp.toFixed(2)}</td>
-                    <td class="py-2 px-3 font-semibold text-indigo-600">₹${val.toFixed(2)}</td>
-                    <td class="py-2 px-3 text-center no-print">
-                        <div class="flex items-center justify-center gap-3">
-                            <button onclick="editDayEntry('${date}', '${e.barcode}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5"><i class="fa-solid fa-pen"></i> Edit</button>
-                            <button onclick="deleteDayEntry('${date}', '${e.barcode}')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5"><i class="fa-solid fa-trash"></i> Delete</button>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50";
+                    tr.innerHTML = `
+                        <td class="py-2 px-3 font-medium text-slate-800">${p.name}</td>
+                        <td class="py-2 px-3 font-mono text-xs text-slate-600">${p.barcode}</td>
+                        <td class="py-2 px-3 font-bold text-indigo-600">${e.qty}</td>
+                        <td class="py-2 px-3 text-slate-700">₹${p.mrp.toFixed(2)}</td>
+                        <td class="py-2 px-3 font-semibold text-indigo-600">₹${val.toFixed(2)}</td>
+                        <td class="py-2 px-3 text-center no-print">
+                            <div class="flex items-center justify-center gap-3">
+                                <button onclick="editDayEntry('${date}', '${p.barcode}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5"><i class="fa-solid fa-pen"></i> Edit</button>
+                                <button onclick="deleteDayEntry('${date}', '${p.barcode}')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5"><i class="fa-solid fa-trash"></i> Delete</button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                }
             });
 
             const dayTotalTr = document.createElement('tr');
@@ -824,22 +803,24 @@
                 return;
             }
 
-            dayEntries.forEach(e => {
-                const p = products.find(prod => prod.barcode === e.barcode) || { name: 'Unknown', mrp: 0 };
-                const val = e.qty * p.mrp;
-                totalQty += e.qty;
-                totalVal += val;
+            products.forEach(p => {
+                const e = dayEntries.find(item => item.barcode === p.barcode);
+                if (e && e.qty > 0) {
+                    const val = e.qty * p.mrp;
+                    totalQty += e.qty;
+                    totalVal += val;
 
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50";
-                tr.innerHTML = `
-                    <td class="py-2 px-3 font-medium text-slate-800">${p.name}</td>
-                    <td class="py-2 px-3 font-mono text-xs text-slate-600">${e.barcode}</td>
-                    <td class="py-2 px-3 font-bold text-indigo-600">${e.qty}</td>
-                    <td class="py-2 px-3 text-slate-700">₹${p.mrp.toFixed(2)}</td>
-                    <td class="py-2 px-3 font-semibold text-indigo-600">₹${val.toFixed(2)}</td>
-                `;
-                tbody.appendChild(tr);
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50";
+                    tr.innerHTML = `
+                        <td class="py-2 px-3 font-medium text-slate-800">${p.name}</td>
+                        <td class="py-2 px-3 font-mono text-xs text-slate-600">${p.barcode}</td>
+                        <td class="py-2 px-3 font-bold text-indigo-600">${e.qty}</td>
+                        <td class="py-2 px-3 text-slate-700">₹${p.mrp.toFixed(2)}</td>
+                        <td class="py-2 px-3 font-semibold text-indigo-600">₹${val.toFixed(2)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
             });
 
             document.getElementById('audit-preview-total-qty').innerText = totalQty;
@@ -862,15 +843,18 @@
             if (confirm(`AUDITOR WARNING: You are about to verify and clear all stock entry records for date ${date}. Proceed?`)) {
                 let totalDestroyedQty = dayEntries.reduce((sum, e) => sum + e.qty, 0);
                 
-                let detailedItems = dayEntries.map(e => {
-                    const p = products.find(prod => prod.barcode === e.barcode) || { name: 'Unknown', mrp: 0 };
-                    return {
-                        barcode: e.barcode,
-                        name: p.name,
-                        qty: e.qty,
-                        mrp: p.mrp,
-                        totalVal: e.qty * p.mrp
-                    };
+                let detailedItems = [];
+                products.forEach(p => {
+                    const e = dayEntries.find(item => item.barcode === p.barcode);
+                    if (e && e.qty > 0) {
+                        detailedItems.push({
+                            barcode: p.barcode,
+                            name: p.name,
+                            qty: e.qty,
+                            mrp: p.mrp,
+                            totalVal: e.qty * p.mrp
+                        });
+                    }
                 });
 
                 let totalDestroyedVal = detailedItems.reduce((sum, item) => sum + item.totalVal, 0);
@@ -988,13 +972,14 @@
                 if (dayEntries.length === 0) {
                     text += `No active stock entries found for ${selectedDate}\n`;
                 } else {
-                    dayEntries.forEach(e => {
-                        const p = products.find(prod => prod.barcode === e.barcode) || { name: 'Unknown', mrp: 0 };
-                        const val = e.qty * p.mrp;
-                        dayQtySum += e.qty;
-                        dayValSum += val;
-                        // Barcode removed, Proper Case product name, quantity highlighted with bold
-                        text += `▫️ ${p.name} \nQty: *${e.qty}*\n`;
+                    products.forEach(p => {
+                        const e = dayEntries.find(item => item.barcode === p.barcode);
+                        if (e && e.qty > 0) {
+                            const val = e.qty * p.mrp;
+                            dayQtySum += e.qty;
+                            dayValSum += val;
+                            text += `▫️ ${p.name} \nQty: *${e.qty}*\n`;
+                        }
                     });
                 }
                 text += `────────────────────────\n📊 *Total Quantity:* ${dayQtySum}\n💰 *Total Value:* ₹${dayValSum.toFixed(2)}\n`;
@@ -1009,7 +994,6 @@
                         const val = totalQty * p.mrp;
                         grandTotalQty += totalQty;
                         grandTotalVal += val;
-                        // Barcode removed, Proper Case product name, quantity highlighted with bold
                         text += `▫️ ${p.name} \nQty: *${totalQty}*\n`;
                     }
                 });
