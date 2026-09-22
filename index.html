@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milk Debit Daily Counting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #tab-reports, #cumulative-container, #calendar-container, .print-section, table, th, td, tr {
+                visibility: visible;
+            }
+            .no-print {
+                display: none !important;
+            }
+            /* Hide rows with zero quantity in print view */
+            .print-zero-hide {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans">
+
+    <!-- Navbar -->
+    <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-50 no-print">
+        <div class="container mx-auto px-4 py-3 flex flex-wrap justify-between items-center">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <i class="fa-solid fa-warehouse"></i> Milk Inventory & Audit System
+            </h1>
+            <div class="flex gap-2 mt-2 sm:mt-0">
+                <button onclick="switchTab('entry')" class="px-3 py-1.5 bg-indigo-700 hover:bg-indigo-600 rounded text-sm font-medium transition tab-btn active-tab shadow-inner" id="btn-entry">Daily Entry</button>
+                <button onclick="switchTab('products')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded text-sm font-medium transition tab-btn" id="btn-products"><i class="fa-solid fa-lock text-xs mr-1"></i> Product Master & MRP</button>
+                <button onclick="switchTab('reports')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded text-sm font-medium transition tab-btn" id="btn-reports">Reports & Calendar</button>
+                <button onclick="switchTab('audit')" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 rounded text-sm font-medium transition tab-btn" id="btn-audit"><i class="fa-solid fa-shield-halved"></i> Auditor Mode</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-6 max-w-7xl">
+
+        <!-- TAB 1: DAILY ENTRY -->
+        <section id="tab-entry" class="tab-content space-y-6">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-700">Daily Stock Debit Entry</h2>
+                    <p class="text-sm text-slate-500">Select date and filter products easily to enter daily quantities.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <label class="font-medium text-sm">Date:</label>
+                    <input type="date" id="entry-date" onchange="renderDailyEntryTable()" class="border border-slate-300 rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+            </div>
+
+            <!-- Status Notification Banner for Daily Entry -->
+            <div id="entry-status-banner" class="hidden p-4 rounded-xl text-sm font-medium border flex items-center justify-between cursor-pointer transition">
+                <!-- Dynamic status message -->
+            </div>
+
+            <!-- Search Filter Bar for Daily Entry -->
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex items-center gap-3">
+                <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+                <input type="text" id="daily-search-input" oninput="renderDailyEntryTable()" placeholder="Search product by name to filter..." class="w-full text-sm outline-none bg-transparent">
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold">
+                                <th class="py-2.5 px-3 hidden">Barcode</th>
+                                <th class="py-2.5 px-3">Product Name</th>
+                                <th class="py-2.5 px-3">MRP (₹)</th>
+                                <th class="py-2.5 px-3 w-20">Today Qty</th>
+                                <th class="py-2.5 px-3">Total Value (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="daily-entry-tbody" class="divide-y divide-slate-100 text-sm">
+                            <!-- Dynamic rows -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="daily-entry-footer" class="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+                    <div class="text-sm font-medium text-slate-600">
+                        Total Items Today: <span id="today-total-qty" class="font-bold text-indigo-600">0</span> | 
+                        Total Value: ₹<span id="today-total-val" class="font-bold text-indigo-600">0.00</span>
+                    </div>
+                    <button onclick="saveDailyEntries()" id="save-entry-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-medium shadow transition flex items-center gap-2">
+                        <i class="fa-solid fa-save"></i> Save Today's Entry
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: PRODUCT MASTER & MRP -->
+        <section id="tab-products" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-700">Product Master & MRP Management</h2>
+                    <p class="text-sm text-slate-500">Protected Section (Password: Shubham@123). Active products loaded.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="forceResetProducts()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                        <i class="fa-solid fa-rotate"></i> Reset Products
+                    </button>
+                    <button onclick="openAddProductModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Add Product
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold">
+                                <th class="py-2.5 px-3">Barcode</th>
+                                <th class="py-2.5 px-3">Product Name</th>
+                                <th class="py-2.5 px-3">Current MRP (₹)</th>
+                                <th class="py-2.5 px-3 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="product-master-tbody" class="divide-y divide-slate-100 text-sm">
+                            <!-- Dynamic rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: REPORTS & CALENDAR -->
+        <section id="tab-reports" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-4 items-center no-print">
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-700">Reports & Analytics</h2>
+                    <p class="text-sm text-slate-500">View cumulative totals and edit date-wise entries here.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="text-sm font-medium">Filter View:</label>
+                    <select id="report-filter-type" onchange="toggleReportView()" class="border border-slate-300 rounded px-3 py-1.5 text-sm outline-none">
+                        <option value="cumulative">Total Cumulative (All Time)</option>
+                        <option value="calendar">Calendar / Date-wise View (Edit/Delete)</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2 flex-wrap">
+                    <button onclick="exportExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1.5"><i class="fa-solid fa-file-excel"></i> Excel</button>
+                    <button onclick="exportPDF()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1.5"><i class="fa-solid fa-file-pdf"></i> PDF (Print/Save)</button>
+                    <button onclick="shareWhatsApp()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1.5"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+                </div>
+            </div>
+
+            <!-- Cumulative View Container -->
+            <div id="cumulative-container" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 border-b border-slate-200 font-semibold text-slate-700 flex justify-between items-center">
+                    <span>Cumulative Product Totals (All Time)</span>
+                    <span class="text-xs text-slate-400 font-normal">Zero quantity items hidden in PDF print view</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold">
+                                <th class="py-2.5 px-3">Barcode</th>
+                                <th class="py-2.5 px-3">Product Name</th>
+                                <th class="py-2.5 px-3">Total Qty Received</th>
+                                <th class="py-2.5 px-3">MRP (₹)</th>
+                                <th class="py-2.5 px-3">Total Value (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cumulative-tbody" class="divide-y divide-slate-100 text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Calendar View Container -->
+            <div id="calendar-container" class="hidden space-y-6">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 items-center justify-between no-print">
+                    <div class="flex items-center gap-3">
+                        <label class="font-medium text-sm">Select Date to Inspect & Edit:</label>
+                        <input type="date" id="calendar-select-date" onchange="loadCalendarDayView()" class="border border-slate-300 rounded px-3 py-1.5 text-sm outline-none">
+                    </div>
+                    <div class="text-sm font-medium text-slate-600">
+                        Entries for Selected Date: <span id="cal-day-count" class="font-bold text-indigo-600">0</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold">
+                                    <th class="py-2.5 px-3">Product Name</th>
+                                    <th class="py-2.5 px-3">Barcode</th>
+                                    <th class="py-2.5 px-3">Date Quantity</th>
+                                    <th class="py-2.5 px-3">MRP (₹)</th>
+                                    <th class="py-2.5 px-3">Value (₹)</th>
+                                    <th class="py-2.5 px-3 text-center no-print">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="calendar-day-tbody" class="divide-y divide-slate-100 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: AUDITOR MODE -->
+        <section id="tab-audit" class="tab-content hidden space-y-6">
+            <div class="bg-rose-50 border border-rose-200 p-5 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-rose-800 flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Auditor Verification & Destruction Panel
+                    </h2>
+                    <p class="text-sm text-rose-600 mt-1">
+                        Verify quantities for the selected date below, check physical items, and click destroy to clear verified entries in bulk.
+                    </p>
+                </div>
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <input type="date" id="audit-date" onchange="renderAuditDayPreview()" class="border border-rose-300 bg-white rounded px-3 py-1.5 text-sm outline-none">
+                    <button onclick="executeAuditDestruction()" class="bg-rose-700 hover:bg-rose-800 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow transition whitespace-nowrap">
+                        <i class="fa-solid fa-trash-can"></i> Verify & Destroy Day Stock
+                    </button>
+                </div>
+            </div>
+
+            <!-- Auditor Live Preview Table for Selected Date -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+                    <span class="font-semibold text-slate-700 text-sm">Stock Entries Preview for Audit Date: <span id="audit-preview-date-label" class="text-indigo-600 font-bold"></span></span>
+                    <span class="text-sm font-medium text-slate-600">Total Qty: <span id="audit-preview-total-qty" class="font-bold text-indigo-600">0</span> | Value: ₹<span id="audit-preview-total-val" class="font-bold text-indigo-600">0.00</span></span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold">
+                                <th class="py-2.5 px-3">Product Name</th>
+                                <th class="py-2.5 px-3">Barcode</th>
+                                <th class="py-2.5 px-3">Quantity</th>
+                                <th class="py-2.5 px-3">MRP (₹)</th>
+                                <th class="py-2.5 px-3">Total Value (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-preview-tbody" class="divide-y divide-slate-100 text-sm">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
+                <h3 class="font-semibold text-slate-700">Audit Summary Log & Verification History (Click card to view item breakdown)</h3>
+                <div id="audit-log-content" class="text-sm text-slate-600 space-y-3">
+                    <p>No audit clearance executed yet. When an auditor verifies and clears a date, records will appear here.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal for Add/Edit Product -->
+    <div id="product-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-lg w-full p-6 space-y-4 shadow-xl">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 id="modal-title" class="font-bold text-lg text-slate-800">Add Product</h3>
+                <button onclick="closeProductModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <input type="hidden" id="modal-edit-index" value="-1">
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Barcode</label>
+                    <input type="text" id="modal-barcode" class="w-full border border-slate-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Product Name</label>
+                    <input type="text" id="modal-name" class="w-full border border-slate-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">MRP (₹)</label>
+                    <input type="number" step="0.01" id="modal-mrp" class="w-full border border-slate-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 pt-3 border-t">
+                <button onclick="closeProductModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded text-sm font-medium">Cancel</button>
+                <button onclick="saveProductData()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-sm font-medium">Save Product</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Editing Day Entry Quantity (Numeric Keyboard) -->
+    <div id="edit-qty-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-sm w-full p-6 space-y-4 shadow-xl">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-lg text-slate-800">Edit Date Quantity</h3>
+                <button onclick="closeEditQtyModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <input type="hidden" id="edit-qty-date">
+            <input type="hidden" id="edit-qty-barcode">
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1" id="edit-qty-product-label">Product Name</label>
+                    <input type="number" inputmode="numeric" pattern="[0-9]*" id="modal-qty-input" class="w-full border border-slate-300 rounded px-3 py-2.5 text-lg font-bold text-indigo-600 outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 pt-3 border-t">
+                <button onclick="closeEditQtyModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded text-sm font-medium">Cancel</button>
+                <button onclick="saveDayEntryQty()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-sm font-medium">Update Quantity</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Proper Case Helper (=PROPER function in Excel)
+        function toProperCase(str) {
+            if (!str) return '';
+            return str.toLowerCase().replace(/(^|\s|-|\()([a-z])/g, (match, p1, p2) => p1 + p2.toUpperCase());
+        }
+
+        const defaultProducts = [
+            { barcode: "8901262260107", name: "AMUL GOLD SPECIAL MILK(500ML)", mrp: 36.00 },
+            { barcode: "8901262260138", name: "AMUL SHAKTI STANDARDISD MILK(500ML)", mrp: 33.00 },
+            { barcode: "8901262200677", name: "AMUL MASTI DAHI POUCH(1KG)", mrp: 80.00 },
+            { barcode: "8901262260114", name: "AMUL GOLD MILKY MILK POUCH(1L)", mrp: 72.00 },
+            { barcode: "8901262260121", name: "AMUL TAAZA MILKY MILK POUCH(500ML)", mrp: 29.00 },
+            { barcode: "8901262260954", name: "AMUL BUFFALO MILK(1L)", mrp: 78.00 },
+            { barcode: "8906023724805", name: "SUMUL SKIMMED MILK CURD(1KG)", mrp: 60.00 },
+            { barcode: "8906023721309", name: "SUMUL BUTTER MILK  POUCH(500ML)", mrp: 17.00 },
+            { barcode: "8906023720494", name: "SUMUL COW MILK POUCH(500ML)", mrp: 30.00 },
+            { barcode: "8901262202220", name: "AMUL MASTI DAHI BUCKET(1KG)", mrp: 115.00 },
+            { barcode: "8906023724843", name: "SUMUL PUNJABI DAHI(1KG)", mrp: 80.00 },
+            { barcode: "8906023721125", name: "SUMUL SPICED BUTTER MILK POU(200ML)", mrp: 10.00 }
+        ];
+
+        // Format product names in Proper Case
+        defaultProducts.forEach(p => p.name = toProperCase(p.name));
+
+        // Sort default products alphabetically by name
+        defaultProducts.sort((a, b) => a.name.localeCompare(b.name));
+
+        let products = JSON.parse(localStorage.getItem('milk_products')) || defaultProducts;
+        products.forEach(p => p.name = toProperCase(p.name));
+        
+        // PERMANENT REMOVAL CLEANUP FOR UNWANTED PRODUCTS
+        const unwantedProductNames = [
+            "Sumul Punjabi Dahi Tub(400g)", 
+            "Sumul Punjabi Dahi Tub(1kg)"
+        ];
+        
+        const unwantedBarcodes = products
+            .filter(p => unwantedProductNames.includes(p.name))
+            .map(p => p.barcode);
+
+        products = products.filter(p => !unwantedProductNames.includes(p.name));
+        products.sort((a, b) => a.name.localeCompare(b.name));
+
+        let entries = JSON.parse(localStorage.getItem('milk_entries')) || [];
+        if (unwantedBarcodes.length > 0) {
+            entries = entries.filter(e => !unwantedBarcodes.includes(e.barcode));
+        }
+
+        let auditLogs = JSON.parse(localStorage.getItem('milk_audit_logs')) || [];
+        let productMasterUnlocked = false;
+        let unlockedDateMap = {}; // Tracks temporary unlock state per date
+
+        localStorage.setItem('milk_products', JSON.stringify(products));
+        localStorage.setItem('milk_entries', JSON.stringify(entries));
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('entry-date').value = todayStr;
+        document.getElementById('calendar-select-date').value = todayStr;
+        document.getElementById('audit-date').value = todayStr;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            switchTab('entry');
+        });
+
+        function saveData() {
+            products.forEach(p => p.name = toProperCase(p.name));
+            products.sort((a, b) => a.name.localeCompare(b.name));
+            localStorage.setItem('milk_products', JSON.stringify(products));
+            localStorage.setItem('milk_entries', JSON.stringify(entries));
+            localStorage.setItem('milk_audit_logs', JSON.stringify(auditLogs));
+        }
+
+        function forceResetProducts() {
+            if (confirm("Are you sure you want to reset all products to the default active items?")) {
+                products = JSON.parse(JSON.stringify(defaultProducts));
+                products.forEach(p => p.name = toProperCase(p.name));
+                products = products.filter(p => !unwantedProductNames.includes(p.name));
+                products.sort((a, b) => a.name.localeCompare(b.name));
+                saveData();
+                renderProductMaster();
+                alert("Successfully reset products!");
+            }
+        }
+
+        function switchTab(tabId) {
+            if (tabId === 'products' && !productMasterUnlocked) {
+                const pwd = prompt("Enter password to access Product Master & MRP:");
+                if (pwd !== "Shubham@123") {
+                    alert("Incorrect password! Access denied.");
+                    return;
+                }
+                productMasterUnlocked = true;
+            }
+
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-indigo-700', 'bg-rose-700', 'shadow-inner');
+                el.classList.add('bg-indigo-600');
+            });
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('btn-' + tabId);
+            if (tabId === 'audit') {
+                activeBtn.classList.remove('bg-indigo-600');
+                activeBtn.classList.add('bg-rose-700', 'shadow-inner');
+            } else {
+                activeBtn.classList.add('bg-indigo-700', 'shadow-inner');
+            }
+
+            if (tabId === 'entry') renderDailyEntryTable();
+            if (tabId === 'products') renderProductMaster();
+            if (tabId === 'reports') {
+                renderCumulativeReport();
+                loadCalendarDayView();
+            }
+            if (tabId === 'audit') {
+                renderAuditDayPreview();
+                renderAuditLogs();
+            }
+        }
+
+        function promptUnlockDate() {
+            const date = document.getElementById('entry-date').value;
+            const pwd = prompt("Enter password to unlock date " + date + " for editing:");
+            if (pwd === "Shubham@123") {
+                unlockedDateMap[date] = true;
+                alert("Date successfully unlocked! You can now edit quantities and save.");
+                renderDailyEntryTable();
+            } else if (pwd !== null) {
+                alert("Incorrect password!");
+            }
+        }
+
+        function renderDailyEntryTable() {
+            const date = document.getElementById('entry-date').value;
+            const tbody = document.getElementById('daily-entry-tbody');
+            const banner = document.getElementById('entry-status-banner');
+            const footer = document.getElementById('daily-entry-footer');
+            const saveBtn = document.getElementById('save-entry-btn');
+            const searchQuery = document.getElementById('daily-search-input').value.toLowerCase().trim();
+            tbody.innerHTML = '';
+
+            const existingDayEntries = entries.filter(e => e.date === date);
+            const hasExisting = existingDayEntries.length > 0;
+            const isUnlocked = unlockedDateMap[date] || false;
+
+            if (hasExisting && !isUnlocked) {
+                banner.className = "p-4 rounded-xl text-sm font-medium border bg-rose-50 border-rose-200 text-rose-800 flex items-center justify-between cursor-pointer hover:bg-rose-100 shadow-sm transition";
+                banner.onclick = promptUnlockDate;
+                banner.innerHTML = `<span><i class="fa-solid fa-lock mr-2"></i> Stock entry exists for <b>${date}</b>. <u class="font-bold">Click here</u> to unlock with password.</span><span class="text-xs bg-rose-200 text-rose-900 px-2.5 py-1 rounded-full font-bold flex items-center gap-1"><i class="fa-solid fa-lock"></i> Date Locked</span>`;
+                banner.classList.remove('hidden');
+                footer.classList.add('hidden');
+            } else if (hasExisting && isUnlocked) {
+                banner.className = "p-4 rounded-xl text-sm font-medium border bg-amber-50 border-amber-200 text-amber-800 flex items-center justify-between shadow-sm";
+                banner.onclick = null;
+                banner.innerHTML = `<span><i class="fa-solid fa-unlock mr-2"></i> Date <b>${date}</b> is currently <b>Unlocked</b>. You can update quantities below and save.</span><span class="text-xs bg-amber-200 text-amber-900 px-2.5 py-1 rounded-full font-bold flex items-center gap-1"><i class="fa-solid fa-unlock"></i> Unlocked</span>`;
+                banner.classList.remove('hidden');
+                footer.classList.remove('hidden');
+                saveBtn.innerHTML = `<i class="fa-solid fa-save"></i> Update Entry`;
+            } else {
+                banner.className = "hidden";
+                banner.onclick = null;
+                footer.classList.remove('hidden');
+                saveBtn.innerHTML = `<i class="fa-solid fa-save"></i> Save Today's Entry`;
+            }
+
+            let totalQty = 0;
+            let totalVal = 0;
+
+            const filteredProducts = products.filter(p => 
+                p.name.toLowerCase().includes(searchQuery) || p.barcode.toLowerCase().includes(searchQuery)
+            );
+
+            filteredProducts.forEach((p) => {
+                const qty = hasExisting ? (existingDayEntries.find(e => e.barcode === p.barcode)?.qty || '') : '';
+                const numericQty = Number(qty) || 0;
+                const val = numericQty * p.mrp;
+
+                totalQty += numericQty;
+                totalVal += val;
+
+                const isDisabled = hasExisting && !isUnlocked;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50";
+                tr.innerHTML = `
+                    <td class="py-2 px-3 font-mono text-xs text-slate-600 hidden">${p.barcode}</td>
+                    <td class="py-2 px-3 font-medium text-slate-800">${p.name}</td>
+                    <td class="py-2 px-3 font-semibold text-slate-700">₹${p.mrp.toFixed(2)}</td>
+                    <td class="py-2 px-3">
+                        <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" value="${qty}" data-barcode="${p.barcode}" 
+                        class="daily-qty-input w-16 border border-slate-300 rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-semibold ${isDisabled ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''}"
+                        ${isDisabled ? 'disabled' : 'oninput="calculateDailyTotals()"'} placeholder="">
+                    </td>
+                    <td class="py-2 px-3 font-semibold text-indigo-600 row-val" id="val-${p.barcode}">₹${val.toFixed(2)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('today-total-qty').innerText = totalQty;
+            document.getElementById('today-total-val').innerText = totalVal.toFixed(2);
+        }
+
+        function calculateDailyTotals() {
+            let totalQty = 0;
+            let totalVal = 0;
+            const inputs = document.querySelectorAll('.daily-qty-input');
+            inputs.forEach(input => {
+                const barcode = input.getAttribute('data-barcode');
+                const product = products.find(p => p.barcode === barcode);
+                const qty = Number(input.value) || 0;
+                const val = qty * product.mrp;
+                document.getElementById('val-' + barcode).innerText = `₹${val.toFixed(2)}`;
+                totalQty += qty;
+                totalVal += val;
+            });
+            document.getElementById('today-total-qty').innerText = totalQty;
+            document.getElementById('today-total-val').innerText = totalVal.toFixed(2);
+        }
+
+        function saveDailyEntries() {
+            const date = document.getElementById('entry-date').value;
+            if (!date) {
+                alert('Please select a valid date.');
+                return;
+            }
+
+            const existingDayEntries = entries.filter(e => e.date === date);
+            const isUnlocked = unlockedDateMap[date] || false;
+
+            if (existingDayEntries.length > 0 && !isUnlocked) {
+                alert('Entry for this date already exists! Double entry is not allowed unless unlocked.');
+                renderDailyEntryTable();
+                return;
+            }
+
+            const inputs = document.querySelectorAll('.daily-qty-input');
+            let hasValidQty = false;
+            inputs.forEach(input => {
+                if (Number(input.value) > 0) hasValidQty = true;
+            });
+
+            if (!hasValidQty) {
+                alert('Please enter at least one quantity greater than 0 before saving.');
+                return;
+            }
+
+            if (existingDayEntries.length > 0) {
+                entries = entries.filter(e => e.date !== date);
+            }
+
+            inputs.forEach(input => {
+                const barcode = input.getAttribute('data-barcode');
+                const qty = Number(input.value) || 0;
+                if (qty > 0) {
+                    entries.push({ date, barcode, qty });
+                }
+            });
+
+            unlockedDateMap[date] = false;
+
+            saveData();
+            alert(`Stock entries successfully saved for ${date}!`);
+            renderDailyEntryTable();
+        }
+
+        function renderProductMaster() {
+            const tbody = document.getElementById('product-master-tbody');
+            tbody.innerHTML = '';
+            products.forEach((p, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50";
+                tr.innerHTML = `
+                    <td class="py-2 px-3 font-mono text-xs text-slate-600">${p.barcode}</td>
+                    <td class="py-2 px-3 font-medium text-slate-800">${p.name}</td>
+                    <td class="py-2 px-3 font-semibold text-slate-700">₹${p.mrp.toFixed(2)}</td>
+                    <td class="py-2 px-3 text-center">
+                        <div class="flex items-center justify-center gap-3">
+                            <button onclick="editProduct(${index})" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5"><i class="fa-solid fa-pen-to-square"></i> Edit MRP</button>
+                            <button onclick="deleteProduct(${index})" class="bg-rose-50 hover:bg-rose-100 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5"><i class="fa-solid fa-trash"></i> Delete</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openAddProductModal() {
+            document.getElementById('modal-title').innerText = "Add New Product";
+            document.getElementById('modal-edit-index').value = -1;
+            document.getElementById('modal-barcode').value = "";
+            document.getElementById('modal-name').value = "";
+            document.getElementById('modal-mrp').value = "";
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        function editProduct(index) {
+            const p = products[index];
+            document.getElementById('modal-title').innerText = "Edit Product & MRP";
+            document.getElementById('modal-edit-index').value = index;
+            document.getElementById('modal-barcode').value = p.barcode;
+            document.getElementById('modal-name').value = p.name;
+            document.getElementById('modal-mrp').value = p.mrp;
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        function closeProductModal() {
+            document.getElementById('product-modal').classList.add('hidden');
+        }
+
+        function saveProductData() {
+            const index = Number(document.getElementById('modal-edit-index').value);
+            const barcode = document.getElementById('modal-barcode').value.trim();
+            const name = toProperCase(document.getElementById('modal-name').value.trim());
+            const mrp = Number(document.getElementById('modal-mrp').value);
+
+            if (!barcode || !name || isNaN(mrp)) {
+                alert('Please fill mandatory fields (Barcode, Name, MRP)');
+                return;
+            }
+
+            if (index === -1) {
+                products.push({ barcode, name, mrp });
+            } else {
+                products[index] = { barcode, name, mrp };
+            }
+
+            saveData();
+            closeProductModal();
+            renderProductMaster();
+            alert('Product updated successfully!');
+        }
+
+        function deleteProduct(index) {
+            if (confirm('Are you sure you want to delete this product?')) {
+                const barcodeToDelete = products[index].barcode;
+                products.splice(index, 1);
+                entries = entries.filter(e => e.barcode !== barcodeToDelete);
+                saveData();
+                renderProductMaster();
+                alert('Product and all its corresponding daily stock entries deleted permanently.');
+            }
+        }
+
+        function toggleReportView() {
+            const filter = document.getElementById('report-filter-type').value;
+            if (filter === 'cumulative') {
+                document.getElementById('cumulative-container').classList.remove('hidden');
+                document.getElementById('calendar-container').classList.add('hidden');
+                renderCumulativeReport();
+            } else {
+                document.getElementById('cumulative-container').classList.add('hidden');
+                document.getElementById('calendar-container').classList.remove('hidden');
+                loadCalendarDayView();
+            }
+        }
+
+        function renderCumulativeReport() {
+            const tbody = document.getElementById('cumulative-tbody');
+            tbody.innerHTML = '';
+
+            let grandTotalQty = 0;
+            let grandTotalVal = 0;
+
+            products.forEach(p => {
+                const totalQty = entries.filter(e => e.barcode === p.barcode).reduce((sum, e) => sum + e.qty, 0);
+                const totalVal = totalQty * p.mrp;
+                grandTotalQty += totalQty;
+                grandTotalVal += totalVal;
+
+                const rowClass = totalQty === 0 ? "hover:bg-slate-50 print-zero-hide" : "hover:bg-slate-50";
+
+                const tr = document.createElement('tr');
+                tr.className = rowClass;
+                tr.innerHTML = `
+                    <td class="py-2 px-3 font-mono text-xs text-slate-600">${p.barcode}</td>
+                    <td class="py-2 px-3 font-medium text-slate-800">${p.name}</td>
+                    <td class="py-2 px-3 font-bold text-indigo-600">${totalQty}</td>
+                    <td class="py-2 px-3 font-semibold text-slate-700">₹${p.mrp.toFixed(2)}</td>
+                    <td class="py-2 px-3 font-semibold text-indigo-600">₹${totalVal.toFixed(2)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const grandTotalTr = document.createElement('tr');
+            grandTotalTr.className = "bg-slate-100 font-bold border-t-2 border-slate-300";
+            grandTotalTr.innerHTML = `
+                <td colspan="2" class="py-2.5 px-3 text-slate-800 uppercase text-xs">Grand Total (All Products)</td>
+                <td class="py-2.5 px-3 text-indigo-700">${grandTotalQty}</td>
+                <td class="py-2.5 px-3 text-slate-500">-</td>
+                <td class="py-2.5 px-3 text-indigo-700">₹${grandTotalVal.toFixed(2)}</td>
+            `;
+            tbody.appendChild(grandTotalTr);
+        }
+
+        function loadCalendarDayView() {
+            const date = document.getElementById('calendar-select-date').value;
+            const tbody = document.getElementById('calendar-day-tbody');
+            tbody.innerHTML = '';
+
+            const dayEntries = entries.filter(e => e.date === date);
+            document.getElementById('cal-day-count').innerText = dayEntries.length;
+
+            if (dayEntries.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">No stock entries found for ${date}</td></tr>`;
+                return;
+            }
+
+            let dayTotalQty = 0;
+            let dayTotalVal = 0;
+
+            dayEntries.forEach((e) => {
+                const p = products.find(prod => prod.barcode === e.barcode) || { name: 'Unknown', mrp: 0 };
+                const val = e.qty * p.mrp;
+                dayTotalQty += e.qty;
+                dayTotalVal += val;
+
+                const tr = document.createElement('tr');
+                tr.className = e.qty === 0 ? "hover:bg-slate-50 print-zero-hide" : "hover:bg-slate-50";
+                tr.innerHTML = `
+                    <td class="py-2 px-3 font-medium text-slate-800">${p.name}</td>
+                    <td class="py-2 px-3 font-mono text-xs text-slate-600">${e.barcode}</td>
+                    <td class="py-2 px-3 font-bold text-indigo-600">${e.qty}</td>
+                    <td class="py-2 px-3 text-slate-700">₹${p.mrp.toFixed(2)}</td>
+                    <td class="py-2 px-3 font-semibold text-indigo-600">₹${val.toFixed(2)}</td>
+                    <td class="py-2 px-3 text-center no-print">
+                        <div class="flex items-center justify-center gap-3">
+                            <button onclick="editDayEntry('${date}', '${e.barcode}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5"><i class="fa-solid fa-pen"></i> Edit</button>
+                            <button onclick="deleteDayEntry('${date}', '${e.barcode}')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5"><i class="fa-solid fa-trash"></i> Delete</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const dayTotalTr = document.createElement('tr');
+            dayTotalTr.className = "bg-slate-100 font-bold border-t-2 border-slate-300";
+            dayTotalTr.innerHTML = `
+                <td colspan="2" class="py-2.5 px-3 text-slate-800 uppercase text-xs">Total for ${date}</td>
+                <td class="py-2.5 px-3 text-indigo-700">${dayTotalQty}</td>
+                <td class="py-2.5 px-3 text-slate-500">-</td>
+                <td class="py-2.5 px-3 text-indigo-700">₹${dayTotalVal.toFixed(2)}</td>
+                <td class="no-print"></td>
+            `;
+            tbody.appendChild(dayTotalTr);
+        }
+
+        function editDayEntry(date, barcode) {
+            const entry = entries.find(e => e.date === date && e.barcode === barcode);
+            const p = products.find(prod => prod.barcode === barcode) || { name: 'Unknown' };
+            if (entry) {
+                document.getElementById('edit-qty-date').value = date;
+                document.getElementById('edit-qty-barcode').value = barcode;
+                document.getElementById('edit-qty-product-label').innerText = `${p.name} (${barcode})`;
+                document.getElementById('modal-qty-input').value = entry.qty;
+                document.getElementById('edit-qty-modal').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('modal-qty-input').focus();
+                    document.getElementById('modal-qty-input').select();
+                }, 100);
+            }
+        }
+
+        function closeEditQtyModal() {
+            document.getElementById('edit-qty-modal').classList.add('hidden');
+        }
+
+        function saveDayEntryQty() {
+            const date = document.getElementById('edit-qty-date').value;
+            const barcode = document.getElementById('edit-qty-barcode').value;
+            const newQty = Number(document.getElementById('modal-qty-input').value);
+
+            if (isNaN(newQty) || newQty < 0) {
+                alert('Please enter a valid quantity.');
+                return;
+            }
+
+            const entry = entries.find(e => e.date === date && e.barcode === barcode);
+            if (entry) {
+                entry.qty = newQty;
+                saveData();
+                loadCalendarDayView();
+                closeEditQtyModal();
+                alert('Quantity updated successfully!');
+            }
+        }
+
+        function deleteDayEntry(date, barcode) {
+            if (confirm('Are you sure you want to delete this entry?')) {
+                entries = entries.filter(e => !(e.date === date && e.barcode === barcode));
+                saveData();
+                loadCalendarDayView();
+            }
+        }
+
+        function renderAuditDayPreview() {
+            const date = document.getElementById('audit-date').value;
+            document.getElementById('audit-preview-date-label').innerText = date;
+            const tbody = document.getElementById('audit-preview-tbody');
+            tbody.innerHTML = '';
+
+            const dayEntries = entries.filter(e => e.date === date);
+            let totalQty = 0;
+            let totalVal = 0;
+
+            if (dayEntries.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No stock entries found for ${date}</td></tr>`;
+                document.getElementById('audit-preview-total-qty').innerText = 0;
+                document.getElementById('audit-preview-total-val').innerText = '0.00';
+                return;
+            }
+
+            dayEntries.forEach(e => {
+                const p = products.find(prod => prod.barcode === e.barcode) || { name: 'Unknown', mrp: 0 };
+                const val = e.qty * p.mrp;
+                totalQty += e.qty;
+                totalVal += val;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50";
+                tr.innerHTML = `
+                    <td class="py-2 px-3 font-medium text-slate-800">${p.name}</td>
+                    <td class="py-2 px-3 font-mono text-xs text-slate-600">${e.barcode}</td>
+                    <td class="py-2 px-3 font-bold text-indigo-600">${e.qty}</td>
+                    <td class="py-2 px-3 text-slate-700">₹${p.mrp.toFixed(2)}</td>
+                    <td class="py-2 px-3 font-semibold text-indigo-600">₹${val.toFixed(2)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('audit-preview-total-qty').innerText = totalQty;
+            document.getElementById('audit-preview-total-val').innerText = totalVal.toFixed(2);
+        }
+
+        function executeAuditDestruction() {
+            const date = document.getElementById('audit-date').value;
+            if (!date) {
+                alert('Please select a date for audit verification.');
+                return;
+            }
+
+            const dayEntries = entries.filter(e => e.date === date);
+            if (dayEntries.length === 0) {
+                alert('No stock entries found for ' + date + ' to audit/destroy.');
+                return;
+            }
+
+            if (confirm(`AUDITOR WARNING: You are about to verify and clear all stock entry records for date ${date}. Proceed?`)) {
+                let totalDestroyedQty = dayEntries.reduce((sum, e) => sum + e.qty, 0);
+                
+                let detailedItems = dayEntries.map(e => {
+                    const p = products.find(prod => prod.barcode === e.barcode) || { name: 'Unknown', mrp: 0 };
+                    return {
+                        barcode: e.barcode,
+                        name: p.name,
+                        qty: e.qty,
+                        mrp: p.mrp,
+                        totalVal: e.qty * p.mrp
+                    };
+                });
+
+                let totalDestroyedVal = detailedItems.reduce((sum, item) => sum + item.totalVal, 0);
+
+                auditLogs.unshift({
+                    id: Date.now(),
+                    timestamp: new Date().toLocaleString(),
+                    auditedDate: date,
+                    totalItems: totalDestroyedQty,
+                    totalValue: totalDestroyedVal,
+                    items: detailedItems,
+                    status: "Verified & Cleared"
+                });
+
+                entries = entries.filter(e => e.date !== date);
+                saveData();
+                renderAuditDayPreview();
+                renderAuditLogs();
+                alert(`Audit clearance successful for ${date}!`);
+            }
+        }
+
+        function renderAuditLogs() {
+            const container = document.getElementById('audit-log-content');
+            if (auditLogs.length === 0) {
+                container.innerHTML = `<p>No audit clearance executed yet.</p>`;
+                return;
+            }
+
+            container.innerHTML = auditLogs.map(log => `
+                <div class="border border-slate-200 rounded-lg overflow-hidden bg-slate-50 transition hover:shadow-sm">
+                    <div onclick="toggleAuditLogDetail(${log.id})" class="p-4 cursor-pointer flex justify-between items-center bg-white">
+                        <div>
+                            <p class="font-semibold text-slate-800">Audited Date: ${log.auditedDate} <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded ml-2">${log.status}</span></p>
+                            <p class="text-xs text-slate-500 mt-0.5">Cleared on: ${log.timestamp} | Total Qty: <span class="font-bold text-indigo-600">${log.totalItems}</span> | Value: <span class="font-bold text-indigo-600">₹${log.totalValue.toFixed(2)}</span></p>
+                        </div>
+                        <div class="text-slate-400 text-sm flex items-center gap-1">
+                            <span>View items</span>
+                            <i class="fa-solid fa-chevron-down" id="icon-${log.id}"></i>
+                        </div>
+                    </div>
+                    <div id="detail-${log.id}" class="hidden border-t border-slate-200 p-4 bg-white space-y-2">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="text-slate-400 border-b border-slate-100">
+                                        <th class="pb-2">Product Name</th>
+                                        <th class="pb-2">Barcode</th>
+                                        <th class="pb-2">Qty</th>
+                                        <th class="pb-2">MRP</th>
+                                        <th class="pb-2">Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-50">
+                                    ${log.items.map(i => `
+                                        <tr>
+                                            <td class="py-2 font-medium text-slate-700">${i.name}</td>
+                                            <td class="py-2 font-mono text-slate-500">${i.barcode}</td>
+                                            <td class="py-2 font-bold text-indigo-600">${i.qty}</td>
+                                            <td class="py-2 text-slate-600">₹${i.mrp.toFixed(2)}</td>
+                                            <td class="py-2 font-semibold text-slate-700">₹${i.totalVal.toFixed(2)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleAuditLogDetail(id) {
+            const detailEl = document.getElementById('detail-' + id);
+            const iconEl = document.getElementById('icon-' + id);
+            if (detailEl.classList.contains('hidden')) {
+                detailEl.classList.remove('hidden');
+                iconEl.className = "fa-solid fa-chevron-up";
+            } else {
+                detailEl.classList.add('hidden');
+                iconEl.className = "fa-solid fa-chevron-down";
+            }
+        }
+
+        function exportExcel() {
+            let csv = "Barcode,Product Name,MRP,Total Qty,Total Value\n";
+            products.forEach(p => {
+                const totalQty = entries.filter(e => e.barcode === p.barcode).reduce((sum, e) => sum + e.qty, 0);
+                const totalVal = totalQty * p.mrp;
+                csv += `"${p.barcode}","${p.name}",${p.mrp},${totalQty},${totalVal}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Milk_Inventory_Report_${todayStr}.csv`;
+            link.click();
+        }
+
+        function exportPDF() {
+            window.print();
+        }
+
+        function shareWhatsApp() {
+            const now = new Date().toLocaleString();
+            const filterType = document.getElementById('report-filter-type').value;
+            const selectedDate = document.getElementById('calendar-select-date').value || todayStr;
+
+            let text = `📦 *MILK DEBIT QUANTITY* 📦\n📅 *Date:* ${now}\n`;
+
+            if (filterType === 'calendar') {
+                text += `\n📌 *DATE-WISE REPORT (${selectedDate})*\n────────────────────────\n`;
+                let dayQtySum = 0;
+                let dayValSum = 0;
+
+                const dayEntries = entries.filter(e => e.date === selectedDate && e.qty > 0);
+                if (dayEntries.length === 0) {
+                    text += `No active stock entries found for ${selectedDate}\n`;
+                } else {
+                    dayEntries.forEach(e => {
+                        const p = products.find(prod => prod.barcode === e.barcode) || { name: 'Unknown', mrp: 0 };
+                        const val = e.qty * p.mrp;
+                        dayQtySum += e.qty;
+                        dayValSum += val;
+                        // Barcode removed, Proper Case product name, quantity highlighted with bold
+                        text += `▫️ ${p.name} \nQty: *${e.qty}*\n`;
+                    });
+                }
+                text += `────────────────────────\n📊 *Total Quantity:* ${dayQtySum}\n💰 *Total Value:* ₹${dayValSum.toFixed(2)}\n`;
+            } else {
+                text += `\n📈 *ALL COMBINE DEBIT QTY*\n────────────────────────\n`;
+                let grandTotalQty = 0;
+                let grandTotalVal = 0;
+
+                products.forEach(p => {
+                    const totalQty = entries.filter(e => e.barcode === p.barcode).reduce((sum, e) => sum + e.qty, 0);
+                    if (totalQty > 0) {
+                        const val = totalQty * p.mrp;
+                        grandTotalQty += totalQty;
+                        grandTotalVal += val;
+                        // Barcode removed, Proper Case product name, quantity highlighted with bold
+                        text += `▫️ ${p.name} \nQty: *${totalQty}*\n`;
+                    }
+                });
+
+                text += `────────────────────────\n📊 *Debit Quantity:* ${grandTotalQty}\n💰 *Debit Value:* ₹${grandTotalVal.toFixed(2)}\n`;
+            }
+
+            text += `\n🔒 *Status:* Counting Done`;
+
+            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+    </script>
+</body>
+</html>
