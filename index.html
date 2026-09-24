@@ -361,7 +361,7 @@
                     deferredPrompt = null;
                 });
             } else {
-                alert('📱 To install this app as a standalone app (without URL bar):\n\n1. Open your browser menu (tap the three dots ⠇ at the top right).\n2. Select "Install app" or "Add to Home screen".\n3. Tap Add / Install, and the app will open in full-screen standalone mode without any URL bar!');
+                alert('📱 To install this app as a standalone app (without URL bar):\n\n1. Open your browser menu (tap the three dots ⋮ at the top right).\n2. Select "Install app" or "Add to Home screen".\n3. Tap Add / Install, and the app will open in full-screen standalone mode without any URL bar!');
             }
         }
 
@@ -373,7 +373,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
-                    const CACHE_NAME = 'milk-audit-cache-v11';
+                    const CACHE_NAME = 'milk-audit-cache-v14';
                     self.addEventListener('install', (e) => {
                         self.skipWaiting();
                     });
@@ -444,7 +444,7 @@
 
         defaultProducts.forEach(p => p.name = toProperCase(p.name));
 
-        const APP_VERSION = 'v11_whatsapp_combined';
+        const APP_VERSION = 'v14_whatsapp_date_format';
         let savedVersion = localStorage.getItem('milk_app_version');
         let products = JSON.parse(localStorage.getItem('milk_products'));
 
@@ -1070,108 +1070,125 @@
             window.print();
         }
 
-        function shareWhatsApp() {
-            const now = new Date().toLocaleString();
-            const filterType = document.getElementById('report-filter-type').value;
-            const selectedDate = document.getElementById('calendar-select-date').value || todayStr;
+        // Helper functions for WhatsApp Date Formatting (DD-MM-YYYY)
+        function formatWhatsAppDate(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                // If format is YYYY-MM-DD, convert to DD-MM-YYYY
+                if (parts[0].length === 4) {
+                    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+            }
+            return dateStr;
+        }
 
-            let text = `📦 *MILK DEBIT QUANTITY* 📦\n📅 *Date:* ${now}\n`;
+        function formatWhatsAppDateTime() {
+            const d = new Date();
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return `${day}-${month}-${year} ${time}`;
+        }
+
+        function shareWhatsApp() {
+            const formattedNow = formatWhatsAppDateTime();
+            const filterType = document.getElementById('report-filter-type').value;
+            const rawDate = document.getElementById('calendar-select-date').value || todayStr;
+            const formattedSelectedDate = formatWhatsAppDate(rawDate);
+
+            let text = `🥛 *MILK DEBIT QUANTITY* 🥛\n`;
+            text += `📅 *Generated On:* ${formattedNow}\n`;
 
             if (filterType === 'calendar') {
-                text += `\n📌 *DATE-WISE REPORT (${selectedDate})*\n────────────────────────\n`;
+                text += `\n📋 *DATE-WISE DEBIT QTY (${formattedSelectedDate})*\n`;
+                text += `━━━━━━━━━━━━━━━━━━━━━\n`;
                 let dayQtySum = 0;
-                let dayValSum = 0;
 
-                const dayEntries = entries.filter(e => e.date === selectedDate && e.qty > 0);
+                const dayEntries = entries.filter(e => e.date === rawDate && e.qty > 0);
                 if (dayEntries.length === 0) {
-                    text += `No active stock entries found for ${selectedDate}\n`;
+                    text += `_No active stock entries found for ${formattedSelectedDate}_\n`;
                 } else {
                     products.forEach(p => {
                         const e = dayEntries.find(item => item.barcode === p.barcode);
                         if (e && e.qty > 0) {
-                            const val = e.qty * p.mrp;
                             dayQtySum += e.qty;
-                            dayValSum += val;
-                            text += `▫️ ${p.name} \nQty: *${e.qty}*\n`;
+                            text += `🔹 *${p.name}*\n   Qty: *${e.qty}*\n`;
                         }
                     });
                 }
-                text += `────────────────────────\n📊 *Total Quantity:* ${dayQtySum}\n💰 *Total Value:* ₹${dayValSum.toFixed(2)}\n`;
+                text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+                text += `📊 *Total Quantity:* *${dayQtySum}*\n`;
             } else {
-                text += `\n📈 *ALL COMBINE DEBIT QTY*\n────────────────────────\n`;
+                text += `\n📦 *ALL DEBIT COMBINED QTY*\n`;
+                text += `━━━━━━━━━━━━━━━━━━━━━\n`;
                 let grandTotalQty = 0;
-                let grandTotalVal = 0;
 
                 products.forEach(p => {
                     const totalQty = entries.filter(e => e.barcode === p.barcode).reduce((sum, e) => sum + e.qty, 0);
                     if (totalQty > 0) {
-                        const val = totalQty * p.mrp;
                         grandTotalQty += totalQty;
-                        grandTotalVal += val;
-                        text += `▫️ ${p.name} \nQty: *${totalQty}*\n`;
+                        text += `🔹 *${p.name}*\n   Qty: *${totalQty}*\n`;
                     }
                 });
 
-                text += `────────────────────────\n📊 *Debit Quantity:* ${grandTotalQty}\n💰 *Debit Value:* ₹${grandTotalVal.toFixed(2)}\n`;
+                text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+                text += `📊 *Total Quantity:* *${grandTotalQty}*\n`;
             }
 
-            text += `\n🔒 *Status:* Counting Done`;
+            text += `\n✨ *Status:* Counting & Audit Done ✅`;
 
             const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
             window.open(whatsappUrl, '_blank');
         }
 
-        // NEW: Combined WhatsApp Share merging both All-Time Cumulative and Selected Date-wise Report in one single message
         function shareCombinedWhatsApp() {
-            const now = new Date().toLocaleString();
-            const selectedDate = document.getElementById('calendar-select-date').value || todayStr;
+            const formattedNow = formatWhatsAppDateTime();
+            const rawDate = document.getElementById('calendar-select-date').value || todayStr;
+            const formattedSelectedDate = formatWhatsAppDate(rawDate);
 
-            let text = `📦 *MILK DEBIT QUANTITY* 📦\n📅 *Report Date:* ${now}\n\n`;
+            let text = `🥛 *MILK DEBIT DAILY COUNTING* 🥛\n`;
+            text += `📅 *Generated On:* ${formattedNow}\n\n`;
 
             // Part 1: All-Time Cumulative Report
-            text += `📈 *ALL COMBINE DEBIT QTY* (All-Time)\n────────────────────────\n`;
+            text += `📦 *1. ALL DEBIT COMBINED QTY*\n`;
+            text += `━━━━━━━━━━━━━━━━━━━━━\n`;
             let grandTotalQty = 0;
-            let grandTotalVal = 0;
 
             products.forEach(p => {
                 const totalQty = entries.filter(e => e.barcode === p.barcode).reduce((sum, e) => sum + e.qty, 0);
                 if (totalQty > 0) {
-                    const val = totalQty * p.mrp;
                     grandTotalQty += totalQty;
-                    grandTotalVal += val;
-                    text += `▫️ ${p.name} \nQty: *${totalQty}*\n`;
+                    text += `🔹 *${p.name}*\n   Qty: *${totalQty}*\n`;
                 }
             });
-            text += `────────────────────────\n`;
-            text += `📊 *Debit Quantity:* ${grandTotalQty}\n`;
-            text += `💰 *Debit Value:* ₹${grandTotalVal.toFixed(2)}\n\n`;
+            text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+            text += `📊 *Grand Total Qty:* *${grandTotalQty}*\n\n`;
 
-            text += `===============================\n\n`;
+            text += `═════════════════════\n\n`;
 
             // Part 2: Date-wise Report for Selected Date
-            text += `📌 *DATE-WISE REPORT (${selectedDate})*\n────────────────────────\n`;
+            text += `📋 *2. DATE-WISE (${formattedSelectedDate})*\n`;
+            text += `━━━━━━━━━━━━━━━━━━━━━\n`;
             let dayQtySum = 0;
-            let dayValSum = 0;
 
-            const dayEntries = entries.filter(e => e.date === selectedDate && e.qty > 0);
+            const dayEntries = entries.filter(e => e.date === rawDate && e.qty > 0);
             if (dayEntries.length === 0) {
-                text += `No active stock entries found for ${selectedDate}\n`;
+                text += `_No active stock entries found for ${formattedSelectedDate}_\n`;
             } else {
                 products.forEach(p => {
                     const e = dayEntries.find(item => item.barcode === p.barcode);
                     if (e && e.qty > 0) {
-                        const val = e.qty * p.mrp;
                         dayQtySum += e.qty;
-                        dayValSum += val;
-                        text += `▫️ ${p.name} \nQty: *${e.qty}*\n`;
+                        text += `🔹 *${p.name}*\n   Qty: *${e.qty}*\n`;
                     }
                 });
             }
-            text += `────────────────────────\n`;
-            text += `📊 *Total Quantity:* ${dayQtySum}\n`;
-            text += `💰 *Total Value:* ₹${dayValSum.toFixed(2)}\n\n`;
+            text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+            text += `📊 *Day Total Qty:* *${dayQtySum}*\n\n`;
 
-            text += `🔒 *Status:* Counting Done`;
+            text += `✨ *Status:* Audit & Counting Done ✅`;
 
             const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
             window.open(whatsappUrl, '_blank');
