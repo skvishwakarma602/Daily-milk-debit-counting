@@ -61,11 +61,11 @@
             <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4">
                 <div>
                     <h2 class="text-lg font-semibold text-slate-700">Daily Stock Debit Entry</h2>
-                    <p class="text-sm text-slate-500">Select date and filter products easily to enter daily quantities.</p>
+                    <p class="text-sm text-slate-500">Select date and filter products easily to enter daily quantities (Advance dates not allowed).</p>
                 </div>
                 <div class="flex items-center gap-3">
                     <label class="font-medium text-sm">Date:</label>
-                    <input type="date" id="entry-date" onchange="renderDailyEntryTable()" class="border border-slate-300 rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <input type="date" id="entry-date" onchange="handleDateChange()" class="border border-slate-300 rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
             </div>
 
@@ -222,21 +222,20 @@
                     <h2 class="text-lg font-bold text-rose-800 flex items-center gap-2">
                         <i class="fa-solid fa-triangle-exclamation"></i> Auditor Verification & Destruction Panel
                     </h2>
-                    <p class="text-sm text-rose-600 mt-1">
-                        Verify quantities for the selected date below, check physical items, and click destroy to clear verified entries in bulk.
+                    <p class="text-sm text-rose-600 mt-1" id="audit-date-range-banner">
+                        Showing all-time cumulative stock awaiting audit and destruction clearance.
                     </p>
                 </div>
                 <div class="flex items-center gap-3 w-full md:w-auto">
-                    <input type="date" id="audit-date" onchange="renderAuditDayPreview()" class="border border-rose-300 bg-white rounded px-3 py-1.5 text-sm outline-none">
-                    <button onclick="executeAuditDestruction()" class="bg-rose-700 hover:bg-rose-800 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow transition whitespace-nowrap">
-                        <i class="fa-solid fa-trash-can"></i> Verify & Destroy Day Stock
+                    <button onclick="executeAuditDestruction()" class="bg-rose-700 hover:bg-rose-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold shadow-lg transition whitespace-nowrap flex items-center gap-2">
+                        <i class="fa-solid fa-trash-can"></i> Verify & Destroy All Stock (WhatsApp Report)
                     </button>
                 </div>
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-                    <span class="font-semibold text-slate-700 text-sm">Stock Entries Preview for Audit Date: <span id="audit-preview-date-label" class="text-indigo-600 font-bold"></span></span>
+                    <span class="font-semibold text-slate-700 text-sm">All-Time Combined Cumulative Stock Preview</span>
                     <span class="text-sm font-medium text-slate-600">Total Qty: <span id="audit-preview-total-qty" class="font-bold text-indigo-600">0</span> | Value: ₹<span id="audit-preview-total-val" class="font-bold text-indigo-600">0.00</span></span>
                 </div>
                 <div class="overflow-x-auto">
@@ -245,7 +244,7 @@
                             <tr class="bg-slate-50/50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold">
                                 <th class="py-2.5 px-3">Product Name</th>
                                 <th class="py-2.5 px-3">Barcode</th>
-                                <th class="py-2.5 px-3">Quantity</th>
+                                <th class="py-2.5 px-3">Total Cumulative Quantity</th>
                                 <th class="py-2.5 px-3">MRP (₹)</th>
                                 <th class="py-2.5 px-3">Total Value (₹)</th>
                             </tr>
@@ -255,10 +254,24 @@
                 </div>
             </div>
 
+            <!-- Password Protected Audit Summary Log & Destruction History -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
-                <h3 class="font-semibold text-slate-700">Audit Summary Log & Verification History (Click card to view item breakdown)</h3>
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h3 class="font-semibold text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-shield-keyhole"></i> Audit Summary Log & Destruction History <span class="text-xs bg-rose-100 text-rose-800 px-2 py-0.5 rounded">Password Protected</span>
+                    </h3>
+                    <div id="audit-lock-container">
+                        <button onclick="promptUnlockAuditHistory()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-lock"></i> Unlock History
+                        </button>
+                    </div>
+                </div>
                 <div id="audit-log-content" class="text-sm text-slate-600 space-y-3">
-                    <p>No audit clearance executed yet.</p>
+                    <div class="p-6 text-center bg-slate-50 border border-dashed border-slate-300 rounded-lg space-y-3">
+                        <i class="fa-solid fa-lock text-rose-500 text-3xl"></i>
+                        <p class="text-slate-700 font-medium">Audit history & destruction backups are password protected.</p>
+                        <p class="text-xs text-slate-500">Click the unlock button above and enter password <code class="bg-slate-200 px-1.5 py-0.5 rounded font-mono text-slate-700">Shubham@123</code> to view.</p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -373,7 +386,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
-                    const CACHE_NAME = 'milk-audit-cache-v14';
+                    const CACHE_NAME = 'milk-audit-cache-v19';
                     self.addEventListener('install', (e) => {
                         self.skipWaiting();
                     });
@@ -444,7 +457,7 @@
 
         defaultProducts.forEach(p => p.name = toProperCase(p.name));
 
-        const APP_VERSION = 'v14_whatsapp_date_format';
+        const APP_VERSION = 'v19_audit_logs_edit_delete';
         let savedVersion = localStorage.getItem('milk_app_version');
         let products = JSON.parse(localStorage.getItem('milk_products'));
 
@@ -457,15 +470,20 @@
         let entries = JSON.parse(localStorage.getItem('milk_entries')) || [];
         let auditLogs = JSON.parse(localStorage.getItem('milk_audit_logs')) || [];
         let productMasterUnlocked = false;
+        let auditHistoryUnlocked = false;
         let unlockedDateMap = {};
 
         localStorage.setItem('milk_products', JSON.stringify(products));
         localStorage.setItem('milk_entries', JSON.stringify(entries));
+        localStorage.setItem('milk_audit_logs', JSON.stringify(auditLogs));
 
         const todayStr = new Date().toISOString().split('T')[0];
-        document.getElementById('entry-date').value = todayStr;
-        document.getElementById('calendar-select-date').value = todayStr;
-        document.getElementById('audit-date').value = todayStr;
+        const entryDateEl = document.getElementById('entry-date');
+        entryDateEl.value = todayStr;
+        entryDateEl.max = todayStr; // Prevent future/advance date selection
+
+        const calDateEl = document.getElementById('calendar-select-date');
+        calDateEl.value = todayStr;
 
         window.addEventListener('DOMContentLoaded', () => {
             switchTab('entry');
@@ -519,9 +537,18 @@
                 loadCalendarDayView();
             }
             if (tabId === 'audit') {
-                renderAuditDayPreview();
+                renderAuditCumulativePreview();
                 renderAuditLogs();
             }
+        }
+
+        function handleDateChange() {
+            const date = entryDateEl.value;
+            if (date > todayStr) {
+                alert("⚠️ Advance (future) date entries are not allowed!");
+                entryDateEl.value = todayStr;
+            }
+            renderDailyEntryTable();
         }
 
         function promptUnlockDate() {
@@ -531,6 +558,17 @@
                 unlockedDateMap[date] = true;
                 alert("Date successfully unlocked! You can now edit quantities and save.");
                 renderDailyEntryTable();
+            } else if (pwd !== null) {
+                alert("Incorrect password!");
+            }
+        }
+
+        function promptUnlockAuditHistory() {
+            const pwd = prompt("Enter password to view Audit History & Destruction Backups:");
+            if (pwd === "Shubham@123") {
+                auditHistoryUnlocked = true;
+                renderAuditLogs();
+                alert("Audit history unlocked successfully!");
             } else if (pwd !== null) {
                 alert("Incorrect password!");
             }
@@ -627,6 +665,11 @@
             const date = document.getElementById('entry-date').value;
             if (!date) {
                 alert('Please select a valid date.');
+                return;
+            }
+
+            if (date > todayStr) {
+                alert('⚠️ Advance (future) date entries are not allowed!');
                 return;
             }
 
@@ -900,28 +943,56 @@
             }
         }
 
-        function renderAuditDayPreview() {
-            const date = document.getElementById('audit-date').value;
-            document.getElementById('audit-preview-date-label').innerText = date;
+        // Helper functions for WhatsApp Date Formatting (DD-MM-YYYY)
+        function formatWhatsAppDate(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                if (parts[0].length === 4) {
+                    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+            }
+            return dateStr;
+        }
+
+        function formatWhatsAppDateTime() {
+            const d = new Date();
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return `${day}-${month}-${year} ${time}`;
+        }
+
+        // Auditor Cumulative Preview with Date Range Detection
+        function renderAuditCumulativePreview() {
             const tbody = document.getElementById('audit-preview-tbody');
+            const banner = document.getElementById('audit-date-range-banner');
             tbody.innerHTML = '';
 
-            const dayEntries = entries.filter(e => e.date === date);
             let totalQty = 0;
             let totalVal = 0;
 
-            if (dayEntries.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No stock entries found for ${date}</td></tr>`;
+            if (entries.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No stock entries found in system for audit.</td></tr>`;
                 document.getElementById('audit-preview-total-qty').innerText = 0;
                 document.getElementById('audit-preview-total-val').innerText = '0.00';
+                banner.innerHTML = `Showing cumulative stock awaiting audit and destruction clearance. (No active entries)`;
                 return;
             }
 
+            const sortedDates = [...new Set(entries.map(e => e.date))].sort();
+            const minDate = formatWhatsAppDate(sortedDates[0]);
+            const maxDate = formatWhatsAppDate(sortedDates[sortedDates.length - 1]);
+
+            banner.innerHTML = `Showing cumulative stock from <b>${minDate}</b> to <b>${maxDate}</b> awaiting audit and destruction clearance.`;
+
             products.forEach(p => {
-                const e = dayEntries.find(item => item.barcode === p.barcode);
-                if (e && e.qty > 0) {
-                    const val = e.qty * p.mrp;
-                    totalQty += e.qty;
+                const productEntries = entries.filter(item => item.barcode === p.barcode);
+                const qty = productEntries.reduce((sum, item) => sum + item.qty, 0);
+                if (qty > 0) {
+                    const val = qty * p.mrp;
+                    totalQty += qty;
                     totalVal += val;
 
                     const tr = document.createElement('tr');
@@ -929,7 +1000,7 @@
                     tr.innerHTML = `
                         <td class="py-2 px-3 font-medium text-slate-800">${p.name}</td>
                         <td class="py-2 px-3 font-mono text-xs text-slate-600">${p.barcode}</td>
-                        <td class="py-2 px-3 font-bold text-indigo-600">${e.qty}</td>
+                        <td class="py-2 px-3 font-bold text-indigo-600">${qty}</td>
                         <td class="py-2 px-3 text-slate-700">₹${p.mrp.toFixed(2)}</td>
                         <td class="py-2 px-3 font-semibold text-indigo-600">₹${val.toFixed(2)}</td>
                     `;
@@ -941,73 +1012,125 @@
             document.getElementById('audit-preview-total-val').innerText = totalVal.toFixed(2);
         }
 
+        // Destruction & WhatsApp Report Function with Automatic Date Range & Backup
         function executeAuditDestruction() {
-            const date = document.getElementById('audit-date').value;
-            if (!date) {
-                alert('Please select a date for audit verification.');
+            if (entries.length === 0) {
+                alert('No stock entries found in the system to audit and destroy.');
                 return;
             }
 
-            const dayEntries = entries.filter(e => e.date === date);
-            if (dayEntries.length === 0) {
-                alert('No stock entries found for ' + date + ' to audit/destroy.');
-                return;
-            }
+            const sortedDates = [...new Set(entries.map(e => e.date))].sort();
+            const minDate = formatWhatsAppDate(sortedDates[0]);
+            const maxDate = formatWhatsAppDate(sortedDates[sortedDates.length - 1]);
+            const dateRangeStr = `${minDate} to ${maxDate}`;
 
-            if (confirm(`AUDITOR WARNING: You are about to verify and clear all stock entry records for date ${date}. Proceed?`)) {
-                let totalDestroyedQty = dayEntries.reduce((sum, e) => sum + e.qty, 0);
-                
+            if (confirm(`AUDITOR WARNING: You are about to verify and destroy all cumulative stock entries from ${dateRangeStr}. This will clear active entries and generate the clearance report. Proceed?`)) {
                 let detailedItems = [];
+                let totalDestroyedQty = 0;
+                let totalDestroyedVal = 0;
+
                 products.forEach(p => {
-                    const e = dayEntries.find(item => item.barcode === p.barcode);
-                    if (e && e.qty > 0) {
+                    const productEntries = entries.filter(item => item.barcode === p.barcode);
+                    const qty = productEntries.reduce((sum, item) => sum + item.qty, 0);
+                    if (qty > 0) {
+                        const val = qty * p.mrp;
+                        totalDestroyedQty += qty;
+                        totalDestroyedVal += val;
                         detailedItems.push({
                             barcode: p.barcode,
                             name: p.name,
-                            qty: e.qty,
+                            qty: qty,
                             mrp: p.mrp,
-                            totalVal: e.qty * p.mrp
+                            totalVal: val
                         });
                     }
                 });
 
-                let totalDestroyedVal = detailedItems.reduce((sum, item) => sum + item.totalVal, 0);
+                const auditTimestamp = formatWhatsAppDateTime();
+                const logId = Date.now();
 
+                auditLogs = JSON.parse(localStorage.getItem('milk_audit_logs')) || [];
                 auditLogs.unshift({
-                    id: Date.now(),
-                    timestamp: new Date().toLocaleString(),
-                    auditedDate: date,
+                    id: logId,
+                    timestamp: auditTimestamp,
+                    auditedDate: dateRangeStr,
                     totalItems: totalDestroyedQty,
                     totalValue: totalDestroyedVal,
                     items: detailedItems,
-                    status: "Verified & Cleared"
+                    status: "Verified & Destroyed"
                 });
 
-                entries = entries.filter(e => e.date !== date);
+                // Clear all entries and save
+                entries = [];
                 saveData();
-                renderAuditDayPreview();
+                renderAuditCumulativePreview();
                 renderAuditLogs();
-                alert(`Audit clearance successful for ${date}!`);
+
+                // Generate WhatsApp destruction report
+                let text = `🛡️ *MILK AUDIT & DESTRUCTION REPORT* 🛡️\n`;
+                text += `📅 *Date Range:* ${dateRangeStr}\n`;
+                text += `⏰ *Cleared On:* ${auditTimestamp}\n`;
+                text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+                detailedItems.forEach(i => {
+                    text += `🔹 *${i.name}*\n   Qty Destroyed: *${i.qty}* | Value: ₹${i.totalVal.toFixed(2)}\n`;
+                });
+                text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+                text += `📊 *Total Qty Destroyed:* *${totalDestroyedQty}*\n`;
+                text += `💰 *Total Value:* *₹${totalDestroyedVal.toFixed(2)}*\n`;
+                text += `✨ *Status:* Audit & Stock Destruction Complete ✅`;
+
+                const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+                window.open(whatsappUrl, '_blank');
+
+                alert('Audit clearance and stock destruction successful! WhatsApp report generated and securely backed up.');
             }
         }
 
         function renderAuditLogs() {
             const container = document.getElementById('audit-log-content');
+            const lockContainer = document.getElementById('audit-lock-container');
+
+            // Always sync auditLogs from localStorage
+            auditLogs = JSON.parse(localStorage.getItem('milk_audit_logs')) || [];
+
+            if (!auditHistoryUnlocked) {
+                lockContainer.innerHTML = `
+                    <button onclick="promptUnlockAuditHistory()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-lock"></i> Unlock History
+                    </button>
+                `;
+                container.innerHTML = `
+                    <div class="p-6 text-center bg-slate-50 border border-dashed border-slate-300 rounded-lg space-y-3">
+                        <i class="fa-solid fa-lock text-rose-500 text-3xl"></i>
+                        <p class="text-slate-700 font-medium">Audit history & destruction backups are password protected.</p>
+                        <button onclick="promptUnlockAuditHistory()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow">Enter Password to View</button>
+                    </div>
+                `;
+                return;
+            }
+
+            lockContainer.innerHTML = `<span class="text-xs bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded font-bold flex items-center gap-1"><i class="fa-solid fa-unlock"></i> Unlocked</span>`;
+
             if (auditLogs.length === 0) {
-                container.innerHTML = `<p>No audit clearance executed yet.</p>`;
+                container.innerHTML = `<p class="text-slate-400 italic">No audit clearance executed yet.</p>`;
                 return;
             }
 
             container.innerHTML = auditLogs.map(log => `
                 <div class="border border-slate-200 rounded-lg overflow-hidden bg-slate-50 transition hover:shadow-sm">
-                    <div onclick="toggleAuditLogDetail(${log.id})" class="p-4 cursor-pointer flex justify-between items-center bg-white">
-                        <div>
-                            <p class="font-semibold text-slate-800">Audited Date: ${log.auditedDate} <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded ml-2">${log.status}</span></p>
-                            <p class="text-xs text-slate-500 mt-0.5">Cleared on: ${log.timestamp} | Total Qty: <span class="font-bold text-indigo-600">${log.totalItems}</span> | Value: <span class="font-bold text-indigo-600">₹${log.totalValue.toFixed(2)}</span></p>
+                    <div class="p-4 bg-white flex flex-wrap justify-between items-center gap-2">
+                        <div onclick="toggleAuditLogDetail(${log.id})" class="cursor-pointer flex-1">
+                            <p class="font-semibold text-slate-800">Period: ${log.auditedDate} <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded ml-2">${log.status}</span></p>
+                            <p class="text-xs text-slate-500 mt-0.5">Cleared on: ${log.timestamp} | Total Qty: <span class="font-bold text-indigo-600">${log.totalItems}</span> | Value: <span class="font-bold text-indigo-600">₹${(Number(log.totalValue) || 0).toFixed(2)}</span></p>
                         </div>
-                        <div class="text-slate-400 text-sm flex items-center gap-1">
-                            <span>View items</span>
-                            <i class="fa-solid fa-chevron-down" id="icon-${log.id}"></i>
+                        <div class="flex items-center gap-6">
+                            <button onclick="deleteEntireAuditLog(${log.id})" class="bg-rose-50 hover:bg-rose-100 text-rose-700 px-3 py-1.5 rounded text-xs font-semibold shadow-sm transition flex items-center gap-1.5" title="Delete entire audit session">
+                                <i class="fa-solid fa-trash-can"></i> Delete Log
+                            </button>
+                            <div onclick="toggleAuditLogDetail(${log.id})" class="text-slate-400 text-sm cursor-pointer flex items-center gap-1">
+                                <span>View items</span>
+                                <i class="fa-solid fa-chevron-down" id="icon-${log.id}"></i>
+                            </div>
                         </div>
                     </div>
                     <div id="detail-${log.id}" class="hidden border-t border-slate-200 p-4 bg-white space-y-2">
@@ -1020,16 +1143,27 @@
                                         <th class="pb-2">Qty</th>
                                         <th class="pb-2">MRP</th>
                                         <th class="pb-2">Value</th>
+                                        <th class="pb-2 text-right">Actions (Edit / Delete)</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-50">
-                                    ${log.items.map(i => `
+                                    ${(log.items || []).map((i, idx) => `
                                         <tr>
-                                            <td class="py-2 font-medium text-slate-700">${i.name}</td>
-                                            <td class="py-2 font-mono text-slate-500">${i.barcode}</td>
-                                            <td class="py-2 font-bold text-indigo-600">${i.qty}</td>
-                                            <td class="py-2 text-slate-600">₹${i.mrp.toFixed(2)}</td>
-                                            <td class="py-2 font-semibold text-slate-700">₹${i.totalVal.toFixed(2)}</td>
+                                            <td class="py-2.5 font-medium text-slate-700">${i.name}</td>
+                                            <td class="py-2.5 font-mono text-slate-500">${i.barcode}</td>
+                                            <td class="py-2.5 font-bold text-indigo-600">${i.qty}</td>
+                                            <td class="py-2.5 text-slate-600">₹${(Number(i.mrp) || 0).toFixed(2)}</td>
+                                            <td class="py-2.5 font-semibold text-slate-700">₹${(Number(i.totalVal) || 0).toFixed(2)}</td>
+                                            <td class="py-2.5 text-right">
+                                                <div class="inline-flex items-center justify-end gap-6">
+                                                    <button onclick="editAuditLogItem(${log.id},${idx})" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded text-xs font-semibold shadow-sm transition flex items-center gap-1">
+                                                        <i class="fa-solid fa-pen"></i> Edit
+                                                    </button>
+                                                    <button onclick="deleteAuditLogItem(${log.id},${idx})" class="bg-rose-50 hover:bg-rose-100 text-rose-700 px-3 py-1.5 rounded text-xs font-semibold shadow-sm transition flex items-center gap-1">
+                                                        <i class="fa-solid fa-trash"></i> Delete
+                                                    </button>
+                                                </div>
+                                            </td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -1038,6 +1172,50 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        function editAuditLogItem(logId, itemIndex) {
+            const log = auditLogs.find(l => l.id === logId);
+            if (!log || !log.items[itemIndex]) return;
+            const item = log.items[itemIndex];
+            const newQtyStr = prompt(`Enter new destroyed quantity for ${item.name}:`, item.qty);
+            if (newQtyStr === null) return;
+            const newQty = Number(newQtyStr);
+            if (isNaN(newQty) || newQty < 0) {
+                alert('Please enter a valid quantity.');
+                return;
+            }
+            item.qty = newQty;
+            item.totalVal = item.qty * item.mrp;
+
+            // Recalculate log totals
+            log.totalItems = log.items.reduce((sum, i) => sum + i.qty, 0);
+            log.totalValue = log.items.reduce((sum, i) => sum + i.totalVal, 0);
+
+            saveData();
+            renderAuditLogs();
+            alert('Audit log item quantity updated successfully!');
+        }
+
+        function deleteAuditLogItem(logId, itemIndex) {
+            if (!confirm('Are you sure you want to delete this specific item from the audit backup log?')) return;
+            const log = auditLogs.find(l => l.id === logId);
+            if (!log) return;
+            log.items.splice(itemIndex, 1);
+
+            // Recalculate log totals
+            log.totalItems = log.items.reduce((sum, i) => sum + i.qty, 0);
+            log.totalValue = log.items.reduce((sum, i) => sum + i.totalVal, 0);
+
+            saveData();
+            renderAuditLogs();
+        }
+
+        function deleteEntireAuditLog(logId) {
+            if (!confirm('Are you sure you want to delete this entire audit backup session?')) return;
+            auditLogs = auditLogs.filter(l => l.id !== logId);
+            saveData();
+            renderAuditLogs();
         }
 
         function toggleAuditLogDetail(id) {
@@ -1068,28 +1246,6 @@
 
         function exportPDF() {
             window.print();
-        }
-
-        // Helper functions for WhatsApp Date Formatting (DD-MM-YYYY)
-        function formatWhatsAppDate(dateStr) {
-            if (!dateStr) return '';
-            const parts = dateStr.split('-');
-            if (parts.length === 3) {
-                // If format is YYYY-MM-DD, convert to DD-MM-YYYY
-                if (parts[0].length === 4) {
-                    return `${parts[2]}-${parts[1]}-${parts[0]}`;
-                }
-            }
-            return dateStr;
-        }
-
-        function formatWhatsAppDateTime() {
-            const d = new Date();
-            const day = String(d.getDate()).padStart(2, '0');
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const year = d.getFullYear();
-            const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            return `${day}-${month}-${year} ${time}`;
         }
 
         function shareWhatsApp() {
